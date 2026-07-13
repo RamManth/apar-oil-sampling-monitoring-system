@@ -320,6 +320,60 @@
             from { transform: translateX(100px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        /* View selector tabs */
+        .view-selector-tabs {
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .view-tab-btn {
+            background-color: transparent;
+            color: #64748b;
+            border-bottom: 3px solid transparent !important;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .view-tab-btn:hover {
+            color: var(--accent);
+            background-color: #f1f5f9;
+        }
+        .view-tab-btn.active {
+            color: var(--accent);
+            background-color: #ffffff;
+            border-bottom: 3px solid var(--accent) !important;
+        }
+
+        /* Status badges and buttons in dashboard */
+        .status-badge-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+            border: 1px solid #fde68a;
+        }
+        .status-badge-done {
+            background-color: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        .btn-status-pending {
+            background-color: #10b981;
+            color: #ffffff;
+            border: 1px solid #10b981;
+        }
+        .btn-status-pending:hover {
+            background-color: #059669;
+            border-color: #059669;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+        }
+        .btn-status-done {
+            background-color: transparent;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+        .btn-status-done:hover {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
     </style>
 </head>
 <body>
@@ -408,120 +462,231 @@
                 </div>
             </div>
 
+            <!-- View Selector Tabs -->
+            <div class="view-selector-tabs d-flex border-bottom" style="background-color: #f8fafc;">
+                <button type="button" class="view-tab-btn active px-4 py-3 fw-bold border-0 text-uppercase" id="tab-sample-entry" onclick="switchView('sample-entry')" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                    📝 Sample Entry
+                </button>
+                <button type="button" class="view-tab-btn px-4 py-3 fw-bold border-0 text-uppercase" id="tab-data-checklist" onclick="switchView('data-checklist')" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                    📋 Data Check List
+                </button>
+                <button type="button" class="view-tab-btn px-4 py-3 fw-bold border-0 text-uppercase" id="tab-about-software" onclick="switchView('about-software')" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                    ℹ️ About Software
+                </button>
+            </div>
+
             <!-- Light Themed Form Body -->
             <div class="card-body p-4 bg-white">
-                <form method="POST" action="/" class="row g-3">
-                    
-                    <!-- SECTION 1: Personnel & Assignment -->
-                    <div class="col-12">
-                        <div class="form-section-header">
-                            <span class="form-section-number">1</span>
-                            <span>Personnel & Assignment</span>
+                <!-- VIEW 1: Sample Entry Form -->
+                <div id="view-sample-entry">
+                    <form method="POST" action="/" class="row g-3">
+                        
+                        <!-- SECTION 1: Personnel & Assignment -->
+                        <div class="col-12">
+                            <div class="form-section-header">
+                                <span class="form-section-number">1</span>
+                                <span>Personnel & Assignment</span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label class="form-label">Name of Executive<span class="required-dot">*</span></label>
-                        <input type="text" name="executive_name" class="form-control" placeholder="e.g. John Doe" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
-                        <select name="handler_name" class="form-select" required>
-                            <option value="" disabled selected>Select handler...</option>
-                            {% for handler in handlers_list %}
-                                <option value="{{ handler.name }}" {% if handler.disabled %}disabled style="color: #cbd5e1; background-color: #f1f5f9;"{% endif %}>
-                                    {{ handler.name }} {% if handler.disabled %}(Locked/Pending){% endif %}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Customer Details / Segment<span class="required-dot">*</span></label>
-                        <input type="text" name="customer_details" class="form-control" placeholder="e.g. BAJAJ MOTORS LIMITED" required>
-                    </div>
-
-                    <!-- SECTION 2: Issue Profile & Timeline -->
-                    <div class="col-12">
-                        <div class="form-section-header">
-                            <span class="form-section-number">2</span>
-                            <span>Issue Profile & Timeline</span>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Name of Executive<span class="required-dot">*</span></label>
+                            <input type="text" name="executive_name" class="form-control" placeholder="e.g. John Doe" required>
                         </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Issue Type<span class="required-dot">*</span></label>
-                        <select name="issue_type" id="issue_type" class="form-select" required>
-                            <option value="" disabled selected>Select profile...</option>
-                            <option value="Condition Monitoring">Condition Monitoring (+7 Days)</option>
-                            <option value="Complain Handling">Complain Handling (+3 Days)</option>
-                            <option value="Product Benchmarking">Product Benchmarking (+10 Days)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Date of Issue<span class="required-dot">*</span></label>
-                        <input type="date" name="issue_date" id="issue_date" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Product Full Name (Competitor/APAR)<span class="required-dot">*</span></label>
-                        <input type="text" name="product_name" class="form-control" placeholder="e.g. APAR PowerOil" required>
-                    </div>
-
-                    <!-- SECTION 3: Sample Specification & Analysis Details -->
-                    <div class="col-12">
-                        <div class="form-section-header">
-                            <span class="form-section-number">3</span>
-                            <span>Sample Specification & Analysis Details</span>
+                        <div class="col-md-4">
+                            <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
+                            <select name="handler_name" class="form-select" required>
+                                <option value="" disabled selected>Select handler...</option>
+                                {% for handler in handlers_list %}
+                                    <option value="{{ handler.name }}" {% if handler.disabled %}disabled style="color: #cbd5e1; background-color: #f1f5f9;"{% endif %}>
+                                        {{ handler.name }} {% if handler.disabled %}(Locked/Pending){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
-                    </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Customer Details / Segment<span class="required-dot">*</span></label>
+                            <input type="text" name="customer_details" class="form-control" placeholder="e.g. BAJAJ MOTORS LIMITED" required>
+                        </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label">Machine From Where Collected</label>
-                        <input type="text" name="machine_collected" class="form-control" placeholder="e.g. ACME FURNACE">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Point of Collection</label>
-                        <input type="text" name="point_of_collection" class="form-control" placeholder="e.g. Tank drain, Sump">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Quantity Sent</label>
-                        <input type="text" name="quantity_sent" class="form-control" placeholder="e.g. 2 Ltrs.">
-                    </div>
+                        <!-- SECTION 2: Issue Profile & Timeline -->
+                        <div class="col-12">
+                            <div class="form-section-header">
+                                <span class="form-section-number">2</span>
+                                <span>Issue Profile & Timeline</span>
+                            </div>
+                        </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label">Competitor's Product Info</label>
-                        <input type="text" name="competitor_info" class="form-control" placeholder="Alternative specifications">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Application Details / Oil Type</label>
-                        <input type="text" name="application_details" class="form-control" placeholder="e.g. Quenching Oil">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Important Test Parameters / Remarks</label>
-                        <input type="text" name="test_parameters" class="form-control" placeholder="Cooling Curve...">
-                    </div>
-                    
-                    <!-- Redefined Target Deadline Date display (clutter reduction) -->
-                    <div class="col-12 mt-4">
-                        <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" id="deadline-preview-card" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; transition: all 0.3s ease;">
-                            <div class="d-flex align-items-center gap-3">
-                                <div id="deadline-icon" style="background-color: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; transition: all 0.2s;">
-                                    📅
+                        <div class="col-md-4">
+                            <label class="form-label">Issue Type<span class="required-dot">*</span></label>
+                            <select name="issue_type" id="issue_type" class="form-select" required>
+                                <option value="" disabled selected>Select profile...</option>
+                                <option value="Condition Monitoring">Condition Monitoring (+7 Days)</option>
+                                <option value="Complain Handling">Complain Handling (+3 Days)</option>
+                                <option value="Product Benchmarking">Product Benchmarking (+10 Days)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date of Issue<span class="required-dot">*</span></label>
+                            <input type="date" name="issue_date" id="issue_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Product Full Name (Competitor/APAR)<span class="required-dot">*</span></label>
+                            <input type="text" name="product_name" class="form-control" placeholder="e.g. APAR PowerOil" required>
+                        </div>
+
+                        <!-- SECTION 3: Sample Specification & Analysis Details -->
+                        <div class="col-12">
+                            <div class="form-section-header">
+                                <span class="form-section-number">3</span>
+                                <span>Sample Specification & Analysis Details</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Machine From Where Collected</label>
+                            <input type="text" name="machine_collected" class="form-control" placeholder="e.g. ACME FURNACE">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Point of Collection</label>
+                            <input type="text" name="point_of_collection" class="form-control" placeholder="e.g. Tank drain, Sump">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Quantity Sent</label>
+                            <input type="text" name="quantity_sent" class="form-control" placeholder="e.g. 2 Ltrs.">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Competitor's Product Info</label>
+                            <input type="text" name="competitor_info" class="form-control" placeholder="Alternative specifications">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Application Details / Oil Type</label>
+                            <input type="text" name="application_details" class="form-control" placeholder="e.g. Quenching Oil">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Important Test Parameters / Remarks</label>
+                            <input type="text" name="test_parameters" class="form-control" placeholder="Cooling Curve...">
+                        </div>
+                        
+                        <!-- Redefined Target Deadline Date display (clutter reduction) -->
+                        <div class="col-12 mt-4">
+                            <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" id="deadline-preview-card" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; transition: all 0.3s ease;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div id="deadline-icon" style="background-color: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; transition: all 0.2s;">
+                                        📅
+                                    </div>
+                                    <div>
+                                        <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Estimated Target Deadline Date</div>
+                                        <div id="deadline_display_val" class="fw-bold" style="font-size: 1.05rem; color: #0f172a;">Awaiting Issue Type & Date...</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Estimated Target Deadline Date</div>
-                                    <div id="deadline_display_val" class="fw-bold" style="font-size: 1.05rem; color: #0f172a;">Awaiting Issue Type & Date...</div>
+                                <input type="hidden" id="deadline_date" value="Awaiting Parameters...">
+                            </div>
+                        </div>
+                        
+                        <!-- Submission Controls -->
+                        <div class="col-12 text-center mt-4 d-flex justify-content-center gap-3">
+                            <button type="submit" class="btn btn-submit text-uppercase">Save Submission Data</button>
+                            <button type="button" class="btn btn-refresh text-uppercase" onclick="triggerManualScan()">Scan Ledger & Refresh</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- VIEW 2: Data Check List (Jobs Dashboard) -->
+                <div id="view-data-checklist" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0 text-uppercase" style="font-size: 0.85rem; color: var(--form-text); letter-spacing: 0.5px;">Active Monitoring Ledger</h5>
+                        <span class="badge bg-secondary text-uppercase py-1.5 px-3" style="font-size: 0.7rem; border-radius: 6px; letter-spacing: 0.5px;">{{ all_jobs|length }} Jobs Total</span>
+                    </div>
+                    
+                    <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">ID</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Executive</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Handler</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Customer Details</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Issue Type</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Issue Date</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Product Full Name</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Status</th>
+                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem; text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if all_jobs %}
+                                    {% for job in all_jobs %}
+                                    <tr id="job-row-{{ job.id }}" style="transition: background-color 0.2s;">
+                                        <td class="fw-bold" style="color: #0f172a; padding: 0.75rem 1rem;">#{{ job.id }}</td>
+                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.executive_name }}</td>
+                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.handler_name }}</td>
+                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.customer_details }}</td>
+                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.issue_type }}</td>
+                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.issue_date }}</td>
+                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.product_name }}</td>
+                                        <td style="padding: 0.75rem 1rem;">
+                                            <span id="badge-{{ job.id }}" class="badge rounded-pill px-2.5 py-1.5 status-badge-item" 
+                                                  data-status="{{ job.status }}" 
+                                                  style="font-size: 0.68rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                {{ job.status }}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 0.75rem 1rem; text-align: center;">
+                                            <button class="btn btn-sm action-btn-toggle" id="btn-{{ job.id }}" onclick="toggleJobStatus({{ job.id }}, '{{ job.status }}')" style="font-size: 0.72rem; border-radius: 6px; padding: 0.3rem 0.6rem; font-weight: 600; transition: all 0.2s;">
+                                                Loading...
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4" style="padding: 1.5rem;">No active jobs found in the ledger.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: About This Software -->
+                <div id="view-about-software" style="display: none;">
+                    <div class="p-4 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b;">
+                        <h4 class="fw-bold mb-3 text-uppercase" style="font-size: 1.1rem; color: var(--accent); letter-spacing: 1px;">About This Software</h4>
+                        <p class="small text-muted mb-4" style="line-height: 1.6;">
+                            The **APAR Oil Sample Monitoring System** is a real-time web platform designed to streamline sample evaluations, deadline tracking, and task allocations. It connects dynamically to Google Sheets to ensure personnel records and statuses are kept in immediate alignment.
+                        </p>
+                        <hr style="border-top: 1px solid #cbd5e1; margin-bottom: 1.5rem;">
+                        <h5 class="fw-bold mb-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px; color: #475569;">Developer & Credits</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">Full Name</div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.95rem;">Ram Manthanwar</div>
                                 </div>
                             </div>
-                            <input type="hidden" id="deadline_date" value="Awaiting Parameters...">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">Email ID</div>
+                                    <div class="fw-bold"><a href="mailto:rmanthanwar@yahoo.com" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">rmanthanwar@yahoo.com</a></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">LinkedIn Profile</div>
+                                    <div class="fw-bold"><a href="https://www.linkedin.com/in/ram-manthanwar-072763216/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">linkedin.com/in/ram-manthanwar... ↗</a></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">GitHub Profile</div>
+                                    <div class="fw-bold"><a href="https://github.com/RamManth" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">github.com/RamManth ↗</a></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- Submission Controls -->
-                    <div class="col-12 text-center mt-4 d-flex justify-content-center gap-3">
-                        <button type="submit" class="btn btn-submit text-uppercase">Save Submission Data</button>
-                        <button type="button" class="btn btn-refresh text-uppercase" onclick="triggerManualScan()">Scan Ledger & Refresh</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -583,22 +748,126 @@
         document.getElementById('issue_type').addEventListener('change', updateDeadline);
         document.getElementById('issue_date').addEventListener('change', updateDeadline);
 
-        // Sound Engine logic - Programmatic continuous chimes
+        // Switch views (tabs)
+        function switchView(viewId) {
+            const sampleEntryForm = document.getElementById('view-sample-entry');
+            const dataChecklist = document.getElementById('view-data-checklist');
+            const aboutSoftware = document.getElementById('view-about-software');
+            
+            const tabSampleEntry = document.getElementById('tab-sample-entry');
+            const tabDataChecklist = document.getElementById('tab-data-checklist');
+            const tabAboutSoftware = document.getElementById('tab-about-software');
+            
+            // Hide all views first
+            sampleEntryForm.style.display = 'none';
+            dataChecklist.style.display = 'none';
+            aboutSoftware.style.display = 'none';
+            
+            // Deactivate all tabs
+            tabSampleEntry.classList.remove('active');
+            tabDataChecklist.classList.remove('active');
+            tabAboutSoftware.classList.remove('active');
+            
+            // Activate selected view and tab
+            if (viewId === 'sample-entry') {
+                sampleEntryForm.style.display = 'block';
+                tabSampleEntry.classList.add('active');
+                localStorage.setItem('activePortalView', 'sample-entry');
+            } else if (viewId === 'data-checklist') {
+                dataChecklist.style.display = 'block';
+                tabDataChecklist.classList.add('active');
+                localStorage.setItem('activePortalView', 'data-checklist');
+            } else if (viewId === 'about-software') {
+                aboutSoftware.style.display = 'block';
+                tabAboutSoftware.classList.add('active');
+                localStorage.setItem('activePortalView', 'about-software');
+            }
+        }
+
+        // Initialize view from localStorage state if present
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedView = localStorage.getItem('activePortalView');
+            if (savedView) {
+                switchView(savedView);
+            }
+            
+            // Also initialize all checklist table rows
+            document.querySelectorAll('.status-badge-item').forEach(badge => {
+                const rowId = badge.id.split('-')[1];
+                const status = badge.getAttribute('data-status');
+                updateRowStatusUI(rowId, status);
+            });
+        });
+
+        // Update Job Status row styling & button
+        function updateRowStatusUI(jobId, status) {
+            const badge = document.getElementById(`badge-${jobId}`);
+            const btn = document.getElementById(`btn-${jobId}`);
+            if (!badge || !btn) return;
+            
+            badge.innerText = status;
+            badge.className = "badge rounded-pill px-2.5 py-1.5 status-badge-item";
+            
+            if (status.trim().toLowerCase() === 'done') {
+                badge.classList.add('status-badge-done');
+                btn.innerText = "Reopen Job ↩";
+                btn.className = "btn btn-sm action-btn-toggle btn-status-done";
+                btn.onclick = () => toggleJobStatus(jobId, 'Pending');
+            } else {
+                badge.classList.add('status-badge-pending');
+                btn.innerText = "Mark Done ✓";
+                btn.className = "btn btn-sm action-btn-toggle btn-status-pending";
+                btn.onclick = () => toggleJobStatus(jobId, 'Done');
+            }
+        }
+
+        // AJAX update job status
+        function toggleJobStatus(jobId, newStatus) {
+            const btn = document.getElementById(`btn-${jobId}`);
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>`;
+            
+            fetch(`/update_status/${jobId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateRowStatusUI(jobId, newStatus);
+                    showNotification(`Job #${jobId} status updated to '${newStatus}'!`, "success");
+                    
+                    // Show a toast that the dashboard will sync and trigger reload in 1.2s to refresh handlers lists/alerts
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1200);
+                } else {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    showNotification(`Failed to update job status: ${data.error}`, "danger");
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerText = originalText;
+                showNotification(`Error updating status: ${error.message}`, "danger");
+            });
+        }
+
+        // Sound Engine logic - Programmatic Melodious Alarm Sound
         let audioCtx = null;
         let alarmTriggered = false;
         let chimeTimeout = null;
         let activeNodes = [];
-        let lastScaleIndex = -1;
-
-        // C Major Pentatonic scale (harmonic, alerting, non-irritating)
-        const chimeScale = [
-            523.25, // C5
-            587.33, // D5
-            659.25, // E5
-            783.99, // G5
-            880.00, // A5
-            1046.50 // C6
-        ];
 
         {% if active_alarms %}
         window.addEventListener('DOMContentLoaded', () => {
@@ -620,81 +889,89 @@
             return expiry && Date.now() < parseInt(expiry);
         }
 
-        function playChimeNote(freq) {
+        // Play a high-quality melodious synth bell note
+        function playSynthNote(freq, startTime, duration) {
             if (!audioCtx) return;
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
             
-            const now = audioCtx.currentTime;
+            const now = audioCtx.currentTime + startTime;
             
             // Create a primary gain node for this specific chime note
             const noteGain = audioCtx.createGain();
             noteGain.gain.setValueAtTime(0, now);
             // Smooth rapid attack
-            noteGain.gain.linearRampToValueAtTime(0.20, now + 0.015);
+            noteGain.gain.linearRampToValueAtTime(0.12, now + 0.02);
             // Slow exponential decay for wind chime ring-out
-            noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
             noteGain.connect(audioCtx.destination);
             
-            // Wind chime overtones (fundamental and partials)
-            // Non-harmonic ratio series simulating hollow metal tubes
-            const partials = [
-                { ratio: 1.0, volume: 0.5, decayScale: 1.0 },
-                { ratio: 2.0, volume: 0.25, decayScale: 0.7 },
-                { ratio: 3.0, volume: 0.15, decayScale: 0.5 },
-                { ratio: 4.2, volume: 0.10, decayScale: 0.4 },
-                { ratio: 5.4, volume: 0.05, decayScale: 0.3 }
-            ];
+            // Fundamental oscillator (triangle wave for warmth)
+            const osc1 = audioCtx.createOscillator();
+            osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(freq, now);
             
-            const oscillators = [];
+            // Sub oscillator (sine wave 1 octave down for depth)
+            const oscSub = audioCtx.createOscillator();
+            oscSub.type = 'sine';
+            oscSub.frequency.setValueAtTime(freq / 2, now);
+            const subGain = audioCtx.createGain();
+            subGain.gain.setValueAtTime(0.04, now);
+            subGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.8);
+            oscSub.connect(subGain);
+            subGain.connect(noteGain);
             
-            partials.forEach(p => {
-                const osc = audioCtx.createOscillator();
-                const oscGain = audioCtx.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq * p.ratio, now);
-                
-                oscGain.gain.setValueAtTime(0, now);
-                oscGain.gain.linearRampToValueAtTime(p.volume, now + 0.01);
-                oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0 * p.decayScale);
-                
-                osc.connect(oscGain);
-                oscGain.connect(noteGain);
-                
-                osc.start(now);
-                osc.stop(now + 3.0 * p.decayScale + 0.1);
-                
-                oscillators.push(osc);
-            });
+            // Overtones (harmonic partials to give a rich musical bell feel)
+            const oscTine = audioCtx.createOscillator();
+            oscTine.type = 'sine';
+            oscTine.frequency.setValueAtTime(freq * 3, now); // perfect fifth overtone
+            const tineGain = audioCtx.createGain();
+            tineGain.gain.setValueAtTime(0.06, now);
+            tineGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35); // fast decay
+            oscTine.connect(tineGain);
+            tineGain.connect(noteGain);
             
-            const noteEntry = { noteGain, oscillators, startTime: now };
+            osc1.connect(noteGain);
+            
+            osc1.start(now);
+            osc1.stop(now + duration + 0.1);
+            
+            oscSub.start(now);
+            oscSub.stop(now + duration + 0.1);
+            
+            oscTine.start(now);
+            oscTine.stop(now + 0.5);
+            
+            const noteEntry = { noteGain, oscillators: [osc1, oscSub, oscTine], startTime: now };
             activeNodes.push(noteEntry);
             
             // Clean up node references after they have fully decayed
             setTimeout(() => {
                 activeNodes = activeNodes.filter(n => n !== noteEntry);
-            }, 3500);
+            }, (duration + 0.5) * 1000);
         }
 
-        function triggerChimeSequence() {
+        function triggerMelodySequence() {
             if (isSnoozed() || !alarmTriggered) return;
             
-            // Pick a note from the scale, ensuring it differs from the last one
-            let index;
-            do {
-                index = Math.floor(Math.random() * chimeScale.length);
-            } while (index === lastScaleIndex && chimeScale.length > 1);
+            // A beautiful, cascading melodious arpeggio (C Major Pentatonic)
+            // It plays a soft, premium notification sound sequence
+            const melody = [
+                { freq: 523.25, delay: 0.0, dur: 1.2 }, // C5
+                { freq: 659.25, delay: 0.15, dur: 1.2 }, // E5
+                { freq: 783.99, delay: 0.30, dur: 1.2 }, // G5
+                { freq: 1046.50, delay: 0.45, dur: 2.0 }, // C6
+                { freq: 880.00, delay: 0.75, dur: 1.2 },  // A5
+                { freq: 1046.50, delay: 0.90, dur: 2.2 }  // C6
+            ];
             
-            lastScaleIndex = index;
-            const freq = chimeScale[index];
+            melody.forEach(note => {
+                playSynthNote(note.freq, note.delay, note.dur);
+            });
             
-            playChimeNote(freq);
-            
-            // Schedule the next chime at a natural, slightly random interval (1.2s to 1.8s)
-            const nextInterval = 1200 + Math.random() * 600;
-            chimeTimeout = setTimeout(triggerChimeSequence, nextInterval);
+            // Loop the melody every 6 seconds to be alerting but not constantly screeching
+            chimeTimeout = setTimeout(triggerMelodySequence, 6000);
         }
 
         function triggerInstantAlarm() {
@@ -706,7 +983,7 @@
                 audioCtx.resume();
             }
             alarmTriggered = true;
-            triggerChimeSequence();
+            triggerMelodySequence();
         }
 
         function snoozeAlarm() {

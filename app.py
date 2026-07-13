@@ -126,6 +126,37 @@ def get_handlers_status():
         return []
     return handlers
 
+def get_all_jobs():
+    """Fetches all evaluation jobs from the Google Sheet (A6:O)."""
+    jobs = []
+    try:
+        service = get_sheets_service()
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:O").execute()
+        rows = result.get('values', [])
+        for idx, row in enumerate(rows):
+            while len(row) < 15:
+                row.append("")
+            
+            # Skip empty or header-like rows
+            if not row[0] or not str(row[0]).strip():
+                continue
+                
+            jobs.append({
+                "id": row[0].strip(),
+                "executive_name": row[1].strip() if len(row) > 1 else "",
+                "handler_name": row[2].strip() if len(row) > 2 else "",
+                "customer_details": row[3].strip() if len(row) > 3 else "",
+                "issue_type": row[4].strip() if len(row) > 4 else "",
+                "issue_date": row[5].strip() if len(row) > 5 else "",
+                "product_name": row[6].strip() if len(row) > 6 else "",
+                "deadline": row[13].strip() if len(row) > 13 else "",
+                "status": row[14].strip() if len(row) > 14 and row[14].strip() else "Pending",
+                "sheet_row_index": idx + 6
+            })
+    except Exception as e:
+        print(f"⚠️ Error fetching all jobs: {e}")
+    return jobs
+
 def calculate_deadline(issue_date_str, issue_type):
     try:
         base_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
@@ -194,7 +225,8 @@ def evaluation_form():
 
     active_alarms = check_upcoming_alarms()
     handlers_list = get_handlers_status()
-    return render_template('form.html', active_alarms=active_alarms, handlers_list=handlers_list)
+    all_jobs = get_all_jobs()
+    return render_template('form.html', active_alarms=active_alarms, handlers_list=handlers_list, all_jobs=all_jobs)
 
 @app.route('/mark_done/<int:record_id>', methods=['POST'])
 def mark_done(record_id):
@@ -221,6 +253,34 @@ def mark_done(record_id):
     except Exception as e:
         flash(f"Cloud update error: {e}", "danger")
     return redirect(url_for('evaluation_form'))
+
+@app.route('/update_status/<int:record_id>', methods=['POST'])
+def update_status(record_id):
+    try:
+        new_status = request.json.get("status", "Done")
+        service = get_sheets_service()
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:A").execute()
+        ids = result.get('values', [])
+        
+        row_target = None
+        for idx, row_id_list in enumerate(ids):
+            if row_id_list and str(row_id_list[0]).isdigit() and int(row_id_list[0]) == record_id:
+                row_target = idx + 6
+                break
+
+        if row_target:
+            body = {'values': [[new_status]]}
+            service.values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=f"Evaluation Data Rowwise!O{row_target}",
+                valueInputOption="RAW",
+                body=body
+            ).execute()
+            return {"success": True}
+        else:
+            return {"success": False, "error": f"Record with ID {record_id} not found"}, 404
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
 
 @app.before_request
 def require_login():
