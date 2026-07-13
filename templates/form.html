@@ -3,104 +3,453 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APAR - Sample Evaluation Form (SEF)</title>
+    <title>APAR - Oil Sample Monitoring System Portal</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        .form-card { border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
-        .brand-header { background: linear-gradient(135deg, #1b365d 0%, #0f2347 100%); padding: 1.5rem; border-bottom: 3px solid #0284c7; }
-        .brand-header h4 { font-weight: 700; font-size: 1.25rem; letter-spacing: 0.5px; }
-        .form-label { font-weight: 600; font-size: 0.825rem; color: #475569; margin-bottom: 0.35rem; }
-        .required-dot { color: #ef4444; margin-left: 2px; }
-        .form-control, .form-select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.9rem; width: 100%; }
-        .deadline-box { background-color: #f8fafc !important; border: 2px dashed #cbd5e1 !important; color: #475569 !important; font-weight: 700; font-size: 1.1rem; text-align: center; }
-        .deadline-box.active { background-color: #fff7ed !important; border-color: #f97316 !important; color: #c2410c !important; }
-        .alarm-banner { background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%); color: white; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
-        .status-badge { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; }
-        .badge-today { background-color: #ffffff; color: #b91c1c; border: 1px solid #b91c1c; }
-        .badge-1day { background-color: #ffedd5; color: #ea580c; }
-        .badge-2day { background-color: #fef9c3; color: #a16207; }
-        .btn-submit { background-color: #10b981; border: none; color: white; font-weight: 600; padding: 0.65rem 2rem; border-radius: 6px; }
-        .btn-submit:hover { background-color: #059669; }
-        .btn-refresh { background-color: #475569; border: none; color: white; font-weight: 600; padding: 0.65rem 2rem; border-radius: 6px; }
-        .btn-refresh:hover { background-color: #334155; }
-        .btn-done { padding: 0.15rem 0.75rem; font-size: 0.8rem; font-weight: 700; border-radius: 4px; }
+        :root {
+            /* General page background (modern dark slate dashboard look) */
+            --bg-main: #090e1a;
+            --header-bg: #111827;
+            --border-color: #1f2937;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            
+            /* Light theme variables for the input area card */
+            --form-bg: #ffffff;
+            --form-text: #0f172a;
+            --form-text-muted: #64748b;
+            --form-border: #e2e8f0;
+            --form-input-bg: #f8fafc;
+            --form-input-border: #cbd5e1;
+            
+            /* Notification badges & urgency status colors */
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --danger-border: rgba(239, 68, 68, 0.2);
+            --danger-text: #ef4444;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --success-border: rgba(16, 185, 129, 0.2);
+            --success-text: #10b981;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.06), transparent 500px),
+                              radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.04), transparent 500px);
+        }
+
+        .form-card {
+            background-color: var(--form-bg);
+            border: 1px solid var(--form-border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            color: var(--form-text);
+        }
+
+        .brand-header {
+            background-color: var(--header-bg);
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .brand-header h4 {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        /* Form styling */
+        .form-section-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 1.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-section-number {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: var(--form-text-muted);
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.3px;
+        }
+
+        .required-dot {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--form-input-bg) !important;
+            border: 1px solid var(--form-input-border) !important;
+            color: var(--form-text) !important;
+            border-radius: 10px;
+            padding: 0.7rem 0.9rem;
+            font-size: 0.9rem;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+            outline: none;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-position: right 0.75rem center !important;
+            background-size: 16px 12px !important;
+            background-repeat: no-repeat !important;
+        }
+
+        .btn-submit {
+            background-color: var(--accent);
+            border: 1px solid var(--accent);
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.75rem 2.25rem;
+            border-radius: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-submit:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-refresh {
+            background-color: transparent;
+            border: 1px solid var(--form-input-border);
+            color: var(--form-text);
+            font-weight: 600;
+            padding: 0.75rem 2.25rem;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-refresh:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* Redefined Notification Drawer */
+        .notification-drawer {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background-color: #0f172a;
+            border-left: 1px solid #1e293b;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 1050;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            color: #f8fafc;
+        }
+
+        .notification-drawer.open {
+            right: 0;
+        }
+
+        .notification-drawer-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-drawer-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .notification-drawer-footer {
+            padding: 1.25rem;
+            border-top: 1px solid #1e293b;
+            background-color: #090d16;
+        }
+
+        .notification-bell-pulse {
+            animation: ring 1.5s infinite ease-in-out;
+        }
+
+        @keyframes ring {
+            0% { transform: scale(1); }
+            10% { transform: scale(0.9) rotate(-3deg); }
+            20% { transform: scale(0.9) rotate(-3deg); }
+            30% { transform: scale(1.1) rotate(3deg); }
+            40% { transform: scale(1.1) rotate(-3deg); }
+            50% { transform: scale(1.1) rotate(3deg); }
+            60% { transform: scale(1.1) rotate(-3deg); }
+            70% { transform: scale(1.1) rotate(3deg); }
+            80% { transform: scale(1.1) rotate(-3deg); }
+            90% { transform: scale(1.1) rotate(3deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1040;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-backdrop.show {
+            opacity: 1;
+        }
+
+        .status-badge {
+            font-size: 0.68rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-today {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-1day {
+            background-color: rgba(249, 115, 22, 0.2);
+            color: #fed7aa;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .badge-2day {
+            background-color: rgba(234, 179, 8, 0.2);
+            color: #fef08a;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        /* Floating Toasts */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 350px;
+            width: 100%;
+        }
+
+        .custom-toast {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #fafafa;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
+        }
+
+        .custom-toast.hide {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.9);
+        }
+
+        .custom-toast-success {
+            border-left: 4px solid #10b981;
+        }
+
+        .custom-toast-danger {
+            border-left: 4px solid #ef4444;
+        }
+
+        .custom-toast-info {
+            border-left: 4px solid #3b82f6;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
-    <div class="container my-4" style="max-width: 1140px;">
-        <!-- Flash Messages Block -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'error' and category != 'danger' else 'danger' }} alert-dismissible fade show mb-4 shadow-sm" role="alert" style="border-radius: 8px;">
-                        <strong>Notice:</strong> {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        {% if active_alarms %}
-        <div class="alert alarm-banner p-3 mb-4 d-flex align-items-center justify-content-between" role="alert">
-            <div class="d-flex align-items-center w-70">
-                <span style="font-size: 1.5rem; margin-right: 12px;">🚨</span>
-                <div>
-                    <strong style="letter-spacing: 0.5px;">SYSTEM ALERT TIMELINE MONITOR:</strong> 
-                    {{ active_alarms|length }} critical pending entries inside window:
-                    <ul class="mb-0 mt-2 text-white font-weight-normal" style="font-size: 0.85rem; padding-left: 20px; list-style-type: square;">
-                        {% for alarm in active_alarms %}
-                            <li class="mb-2 d-flex align-items-center gap-2">
+    <!-- Floating Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Background Backdrop for Drawer -->
+    <div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
+
+    <!-- Redefined Notification Drawer -->
+    <div id="notificationDrawer" class="notification-drawer">
+        <div class="notification-drawer-header">
+            <h5 class="m-0 text-uppercase fw-bold d-flex align-items-center gap-2" style="font-size: 1rem; letter-spacing: 0.5px;">
+                <span>🚨</span> Active Timeline Monitor
+            </h5>
+            <button type="button" class="btn-close btn-close-white" onclick="closeDrawer()" aria-label="Close"></button>
+        </div>
+        <div class="notification-drawer-body">
+            {% if active_alarms %}
+                <div class="mb-3 text-warning fw-semibold" style="font-size: 0.85rem; line-height: 1.4;">
+                    There are {{ active_alarms|length }} critical pending entries requiring attention:
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    {% for alarm in active_alarms %}
+                        <div class="p-3 rounded-3" style="background-color: #1e293b; border: 1px solid #334155;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="status-badge {% if 'TODAY' in alarm.status %}badge-today{% elif '1 Day' in alarm.status %}badge-1day{% else %}badge-2day{% endif %}">
                                     {{ alarm.status }}
-                                </span> 
-                                <span>Executive: <strong>{{ alarm.executive }}</strong> | Customer: <strong>{{ alarm.customer }}</strong> (Target: {{ alarm.deadline }})</span>
-                                <form method="POST" action="/mark_done/{{ alarm.id }}" class="d-inline m-0 ms-2">
-                                    <button type="submit" class="btn btn-sm btn-success btn-done text-uppercase">Job Done ✓</button>
-                                </form>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                                </span>
+                                <span class="text-secondary" style="font-size: 0.75rem; font-weight: 600;">ID #{{ alarm.id }}</span>
+                            </div>
+                            <div class="mb-3" style="font-size: 0.85rem; line-height: 1.5; color: #cbd5e1;">
+                                <div>Executive: <strong class="text-white">{{ alarm.executive }}</strong></div>
+                                <div>Customer: <strong class="text-white">{{ alarm.customer }}</strong></div>
+                                <div class="mt-1 text-info" style="font-size: 0.8rem;">Target Date: <strong>{{ alarm.deadline }}</strong></div>
+                            </div>
+                            <form method="POST" action="/mark_done/{{ alarm.id }}" class="m-0">
+                                <button type="submit" class="btn btn-sm btn-success w-100 text-uppercase fw-bold py-1.5" style="font-size: 0.75rem; border-radius: 6px;">Job Done ✓</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-5 mt-4">
+                    <span style="font-size: 2.5rem; display: block; margin-bottom: 1rem;">🎉</span>
+                    <p class="mb-1 fw-bold text-white">All Targets Clear</p>
+                    <span class="text-secondary" style="font-size: 0.8rem;">No active critical alarms are registered.</span>
+                </div>
+            {% endif %}
+        </div>
+        <div class="notification-drawer-footer">
+            {% if active_alarms %}
+                <button class="btn btn-warning w-100 text-dark fw-bold text-uppercase py-2" style="font-size: 0.8rem; border-radius: 8px; letter-spacing: 0.5px;" onclick="snoozeAlarm()">
+                    Snooze Alarm (5 Min)
+                </button>
+            {% else %}
+                <button class="btn btn-outline-secondary w-100 disabled" style="font-size: 0.8rem; border-radius: 8px;">
+                    Alarm System Dormant
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container my-4" style="max-width: 1040px;">
+        <div class="card form-card">
+            <!-- Brand Header -->
+            <div class="brand-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR" style="height: 28px; width: auto;">
+                </div>
+                <h4 class="text-uppercase text-center flex-grow-1">APAR - Oil Sample Monitoring System</h4>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Bell Button with badge -->
+                    <button id="notification-bell-btn" class="btn btn-link position-relative p-1 text-white border-0 {% if active_alarms %}notification-bell-pulse{% endif %}" style="text-decoration: none; outline: none; transition: transform 0.2s;" onclick="toggleDrawer()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-bell-fill" viewBox="0 0 16 16">
+                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/>
+                        </svg>
+                        {% if active_alarms %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
+                            {{ active_alarms|length }}
+                        </span>
+                        {% endif %}
+                    </button>
+                    <a href="/logout" class="btn btn-sm btn-outline-light fw-bold text-uppercase px-3" style="font-size: 0.8rem; border-radius: 6px; letter-spacing: 0.5px;">Logout</a>
                 </div>
             </div>
-            <button class="btn btn-sm btn-light fw-bold px-3 text-danger align-self-start" onclick="snoozeAlarm()">Snooze Alarm (5m)</button>
-        </div>
-        {% endif %}
 
-        <div class="card form-card">
-            <div class="brand-header text-white d-flex justify-content-between align-items-center">
-                <div style="width: 90px;"></div> <!-- Spacer to visually center header title -->
-                <h4 class="m-0 text-uppercase text-center flex-grow-1">APAR - Sample Evaluation Form (SEF) Data Portal</h4>
-                <a href="/logout" class="btn btn-sm btn-outline-light fw-bold text-uppercase px-3" style="font-size: 0.8rem; border-color: rgba(255,255,255,0.35); border-radius: 6px; letter-spacing: 0.5px;">Logout</a>
-            </div>
-            
+            <!-- Light Themed Form Body -->
             <div class="card-body p-4 bg-white">
                 <form method="POST" action="/" class="row g-3">
+                    
+                    <!-- SECTION 1: Personnel & Assignment -->
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <span class="form-section-number">1</span>
+                            <span>Personnel & Assignment</span>
+                        </div>
+                    </div>
+                    
                     <div class="col-md-4">
-                        <label class="form-label">1. Name of Executive<span class="required-dot">*</span></label>
-                        <input type="text" name="executive_name" class="form-control" placeholder="Executive name" required>
+                        <label class="form-label">Name of Executive<span class="required-dot">*</span></label>
+                        <input type="text" name="executive_name" class="form-control" placeholder="e.g. John Doe" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">2. Allocate Handler<span class="required-dot">*</span></label>
+                        <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
                         <select name="handler_name" class="form-select" required>
                             <option value="" disabled selected>Select handler...</option>
                             {% for handler in handlers_list %}
                                 <option value="{{ handler.name }}" {% if handler.disabled %}disabled style="color: #cbd5e1; background-color: #f1f5f9;"{% endif %}>
-                                    {{ handler.name }} {% if handler.disabled %}(Locked){% endif %}
+                                    {{ handler.name }} {% if handler.disabled %}(Locked/Pending){% endif %}
                                 </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">3. Customer Details / Segment<span class="required-dot">*</span></label>
+                        <label class="form-label">Customer Details / Segment<span class="required-dot">*</span></label>
                         <input type="text" name="customer_details" class="form-control" placeholder="e.g. BAJAJ MOTORS LIMITED" required>
                     </div>
 
+                    <!-- SECTION 2: Issue Profile & Timeline -->
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <span class="form-section-number">2</span>
+                            <span>Issue Profile & Timeline</span>
+                        </div>
+                    </div>
+
                     <div class="col-md-4">
-                        <label class="form-label">4. Issue Type<span class="required-dot">*</span></label>
+                        <label class="form-label">Issue Type<span class="required-dot">*</span></label>
                         <select name="issue_type" id="issue_type" class="form-select" required>
                             <option value="" disabled selected>Select profile...</option>
                             <option value="Condition Monitoring">Condition Monitoring (+7 Days)</option>
@@ -109,62 +458,98 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">5. Date of Issue<span class="required-dot">*</span></label>
+                        <label class="form-label">Date of Issue<span class="required-dot">*</span></label>
                         <input type="date" name="issue_date" id="issue_date" class="form-control" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">6. Product Full Name (Competitor/APAR)<span class="required-dot">*</span></label>
-                        <input type="text" name="product_name" class="form-control" placeholder="Product details" required>
+                        <label class="form-label">Product Full Name (Competitor/APAR)<span class="required-dot">*</span></label>
+                        <input type="text" name="product_name" class="form-control" placeholder="e.g. APAR PowerOil" required>
+                    </div>
+
+                    <!-- SECTION 3: Sample Specification & Analysis Details -->
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <span class="form-section-number">3</span>
+                            <span>Sample Specification & Analysis Details</span>
+                        </div>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">7. Machine From Where Collected</label>
+                        <label class="form-label">Machine From Where Collected</label>
                         <input type="text" name="machine_collected" class="form-control" placeholder="e.g. ACME FURNACE">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">8. Point of Collection</label>
+                        <label class="form-label">Point of Collection</label>
                         <input type="text" name="point_of_collection" class="form-control" placeholder="e.g. Tank drain, Sump">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">9. Quantity Sent</label>
+                        <label class="form-label">Quantity Sent</label>
                         <input type="text" name="quantity_sent" class="form-control" placeholder="e.g. 2 Ltrs.">
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">10. Competitor's Product Info</label>
+                        <label class="form-label">Competitor's Product Info</label>
                         <input type="text" name="competitor_info" class="form-control" placeholder="Alternative specifications">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">11. Application Details / Oil Type</label>
+                        <label class="form-label">Application Details / Oil Type</label>
                         <input type="text" name="application_details" class="form-control" placeholder="e.g. Quenching Oil">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">12. Important Test Parameters / Remarks</label>
+                        <label class="form-label">Important Test Parameters / Remarks</label>
                         <input type="text" name="test_parameters" class="form-control" placeholder="Cooling Curve...">
                     </div>
                     
-                    <div class="col-12 mt-2">
-                        <label class="form-label text-secondary text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">13. System Calculated Target Deadline Date</label>
-                        <input type="text" id="deadline_date" class="form-control deadline-box" readonly value="Awaiting Parameters...">
+                    <!-- Redefined Target Deadline Date display (clutter reduction) -->
+                    <div class="col-12 mt-4">
+                        <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" id="deadline-preview-card" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; transition: all 0.3s ease;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="deadline-icon" style="background-color: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; transition: all 0.2s;">
+                                    📅
+                                </div>
+                                <div>
+                                    <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Estimated Target Deadline Date</div>
+                                    <div id="deadline_display_val" class="fw-bold" style="font-size: 1.05rem; color: #0f172a;">Awaiting Issue Type & Date...</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="deadline_date" value="Awaiting Parameters...">
+                        </div>
                     </div>
                     
+                    <!-- Submission Controls -->
                     <div class="col-12 text-center mt-4 d-flex justify-content-center gap-3">
-                        <button type="submit" class="btn btn-submit btn-lg">Save Submission Data</button>
-                        <button type="button" class="btn btn-refresh btn-lg" onclick="triggerManualScan()">Scan Ledger & Refresh</button>
+                        <button type="submit" class="btn btn-submit text-uppercase">Save Submission Data</button>
+                        <button type="button" class="btn btn-refresh text-uppercase" onclick="triggerManualScan()">Scan Ledger & Refresh</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- Hidden alarm audio -->
     <audio id="alarmAudio" loop preload="auto">
         <source src="{{ url_for('static', filename='alarm.wav') }}" type="audio/wav">
     </audio>
 
+    <!-- Flash message parsing -> JavaScript Toasts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                window.addEventListener('DOMContentLoaded', () => {
+                    {% for category, message in messages %}
+                        showNotification("{{ message }}", "{{ 'danger' if category in ['error', 'danger'] else ('success' if category == 'success' else 'info') }}");
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+
     <script>
+        // Set today's date in datepicker on load
         const today = new Date();
         document.getElementById('issue_date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+        // Live calculation of target deadline
         function updateDeadline() {
             const issueType = document.getElementById('issue_type').value;
             const issueDateVal = document.getElementById('issue_date').value;
@@ -179,18 +564,40 @@
             const targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
             targetDate.setDate(targetDate.getDate() + daysToAdd);
 
-            document.getElementById('deadline_date').value = `${String(targetDate.getDate()).padStart(2, '0')}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${targetDate.getFullYear()}`;
-            document.getElementById('deadline_date').classList.add('active');
+            const formattedDate = `${String(targetDate.getDate()).padStart(2, '0')}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${targetDate.getFullYear()}`;
+            
+            // Set hidden field and update text interface
+            document.getElementById('deadline_date').value = formattedDate;
+            
+            const displayVal = document.getElementById('deadline_display_val');
+            displayVal.innerText = formattedDate;
+            displayVal.style.color = '#3b82f6';
+            
+            const previewCard = document.getElementById('deadline-preview-card');
+            previewCard.style.backgroundColor = '#eff6ff';
+            previewCard.style.borderColor = '#93c5fd';
+            
+            const icon = document.getElementById('deadline-icon');
+            icon.style.backgroundColor = '#dbeafe';
+            icon.style.color = '#3b82f6';
+            icon.innerText = '⚡';
         }
 
         document.getElementById('issue_type').addEventListener('change', updateDeadline);
         document.getElementById('issue_date').addEventListener('change', updateDeadline);
 
+        // Sound Engine logic
         const audioElement = document.getElementById('alarmAudio');
         let audioCtx = null, gainNode = null, sourceNode = null, alarmTriggered = false;
 
         {% if active_alarms %}
         window.addEventListener('DOMContentLoaded', () => {
+            // Smoothly auto-open drawer if unsnoozed
+            if (!isSnoozed()) {
+                setTimeout(() => {
+                    openDrawer();
+                }, 800);
+            }
             triggerInstantAlarm();
             ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(hook => {
                 window.addEventListener(hook, triggerInstantAlarm, { once: true });
@@ -217,30 +624,76 @@
             audioElement.play().then(() => { alarmTriggered = true; }).catch(err => {});
         }
 
-        function showNotification(message, type = 'info') {
-            const container = document.querySelector('.container');
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show mb-4 shadow-sm`;
-            alertDiv.role = 'alert';
-            alertDiv.style.borderRadius = '8px';
-            alertDiv.innerHTML = `
-                <strong>Notice:</strong> ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            container.insertBefore(alertDiv, container.firstChild);
-            setTimeout(() => {
-                try {
-                    const bsAlert = new bootstrap.Alert(alertDiv);
-                    bsAlert.close();
-                } catch(e) {}
-            }, 5000);
-        }
-
         function snoozeAlarm() {
             if (audioElement) { audioElement.pause(); audioElement.currentTime = 0; }
             alarmTriggered = false;
             localStorage.setItem('alarmSnoozeExpiry', Date.now() + 300000);
+            closeDrawer();
             showNotification("Alarm has been snoozed for 5 minutes.", "info");
+        }
+
+        // Drawer Controls
+        function openDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            const bell = document.getElementById('notification-bell-btn');
+            
+            if (drawer) drawer.classList.add('open');
+            if (backdrop) {
+                backdrop.style.display = 'block';
+                setTimeout(() => backdrop.classList.add('show'), 10);
+            }
+            
+            // Remove bell vibration pulse once opened
+            if (bell) {
+                bell.classList.remove('notification-bell-pulse');
+            }
+        }
+
+        function closeDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            
+            if (drawer) drawer.classList.remove('open');
+            if (backdrop) {
+                backdrop.classList.remove('show');
+                setTimeout(() => backdrop.style.display = 'none', 300);
+            }
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            if (drawer && drawer.classList.contains('open')) {
+                closeDrawer();
+            } else {
+                openDrawer();
+            }
+        }
+
+        // Floating Toast Trigger
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `custom-toast custom-toast-${type}`;
+            
+            let iconMarkup = 'ℹ️';
+            if (type === 'success') iconMarkup = '✅';
+            if (type === 'danger') iconMarkup = '❌';
+
+            toast.innerHTML = `
+                <div style="font-size: 1.1rem; line-height: 1;">${iconMarkup}</div>
+                <div style="flex-grow: 1; font-size: 0.85rem; font-weight: 500;">${message}</div>
+                <button type="button" class="btn-close btn-close-white" style="font-size: 0.7rem; padding: 0.2rem; margin: -0.2rem -0.2rem -0.2rem auto; outline: none; box-shadow: none;" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
         function triggerManualScan() { window.location.reload(); }
