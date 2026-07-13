@@ -526,10 +526,7 @@
         </div>
     </div>
 
-    <!-- Hidden alarm audio -->
-    <audio id="alarmAudio" loop preload="auto">
-        <source src="{{ url_for('static', filename='alarm.wav') }}" type="audio/wav">
-    </audio>
+    <!-- Alarm audio generated programmatically via Web Audio API -->
 
     <!-- Flash message parsing -> JavaScript Toasts -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -586,9 +583,22 @@
         document.getElementById('issue_type').addEventListener('change', updateDeadline);
         document.getElementById('issue_date').addEventListener('change', updateDeadline);
 
-        // Sound Engine logic
-        const audioElement = document.getElementById('alarmAudio');
-        let audioCtx = null, gainNode = null, sourceNode = null, alarmTriggered = false;
+        // Sound Engine logic - Programmatic continuous chimes
+        let audioCtx = null;
+        let alarmTriggered = false;
+        let chimeTimeout = null;
+        let activeNodes = [];
+        let lastScaleIndex = -1;
+
+        // C Major Pentatonic scale (harmonic, alerting, non-irritating)
+        const chimeScale = [
+            523.25, // C5
+            587.33, // D5
+            659.25, // E5
+            783.99, // G5
+            880.00, // A5
+            1046.50 // C6
+        ];
 
         {% if active_alarms %}
         window.addEventListener('DOMContentLoaded', () => {
@@ -610,24 +620,121 @@
             return expiry && Date.now() < parseInt(expiry);
         }
 
+        function playChimeNote(freq) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const now = audioCtx.currentTime;
+            
+            // Create a primary gain node for this specific chime note
+            const noteGain = audioCtx.createGain();
+            noteGain.gain.setValueAtTime(0, now);
+            // Smooth rapid attack
+            noteGain.gain.linearRampToValueAtTime(0.20, now + 0.015);
+            // Slow exponential decay for wind chime ring-out
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+            noteGain.connect(audioCtx.destination);
+            
+            // Wind chime overtones (fundamental and partials)
+            // Non-harmonic ratio series simulating hollow metal tubes
+            const partials = [
+                { ratio: 1.0, volume: 0.5, decayScale: 1.0 },
+                { ratio: 2.0, volume: 0.25, decayScale: 0.7 },
+                { ratio: 3.0, volume: 0.15, decayScale: 0.5 },
+                { ratio: 4.2, volume: 0.10, decayScale: 0.4 },
+                { ratio: 5.4, volume: 0.05, decayScale: 0.3 }
+            ];
+            
+            const oscillators = [];
+            
+            partials.forEach(p => {
+                const osc = audioCtx.createOscillator();
+                const oscGain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq * p.ratio, now);
+                
+                oscGain.gain.setValueAtTime(0, now);
+                oscGain.gain.linearRampToValueAtTime(p.volume, now + 0.01);
+                oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0 * p.decayScale);
+                
+                osc.connect(oscGain);
+                oscGain.connect(noteGain);
+                
+                osc.start(now);
+                osc.stop(now + 3.0 * p.decayScale + 0.1);
+                
+                oscillators.push(osc);
+            });
+            
+            const noteEntry = { noteGain, oscillators, startTime: now };
+            activeNodes.push(noteEntry);
+            
+            // Clean up node references after they have fully decayed
+            setTimeout(() => {
+                activeNodes = activeNodes.filter(n => n !== noteEntry);
+            }, 3500);
+        }
+
+        function triggerChimeSequence() {
+            if (isSnoozed() || !alarmTriggered) return;
+            
+            // Pick a note from the scale, ensuring it differs from the last one
+            let index;
+            do {
+                index = Math.floor(Math.random() * chimeScale.length);
+            } while (index === lastScaleIndex && chimeScale.length > 1);
+            
+            lastScaleIndex = index;
+            const freq = chimeScale[index];
+            
+            playChimeNote(freq);
+            
+            // Schedule the next chime at a natural, slightly random interval (1.2s to 1.8s)
+            const nextInterval = 1200 + Math.random() * 600;
+            chimeTimeout = setTimeout(triggerChimeSequence, nextInterval);
+        }
+
         function triggerInstantAlarm() {
-            if (isSnoozed() || alarmTriggered || !audioElement) return;
+            if (isSnoozed() || alarmTriggered) return;
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                sourceNode = audioCtx.createMediaElementSource(audioElement);
-                gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime); 
-                sourceNode.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
             }
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            audioElement.play().then(() => { alarmTriggered = true; }).catch(err => {});
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            alarmTriggered = true;
+            triggerChimeSequence();
         }
 
         function snoozeAlarm() {
-            if (audioElement) { audioElement.pause(); audioElement.currentTime = 0; }
+            // Stop scheduled chimes
+            if (chimeTimeout) {
+                clearTimeout(chimeTimeout);
+                chimeTimeout = null;
+            }
+            
             alarmTriggered = false;
             localStorage.setItem('alarmSnoozeExpiry', Date.now() + 300000);
+            
+            // Fast fade-out for currently active note generators
+            const now = audioCtx ? audioCtx.currentTime : 0;
+            activeNodes.forEach(node => {
+                try {
+                    node.noteGain.gain.cancelScheduledValues(now);
+                    node.noteGain.gain.setValueAtTime(node.noteGain.gain.value, now);
+                    node.noteGain.gain.linearRampToValueAtTime(0, now + 0.15); // fade in 150ms
+                    setTimeout(() => {
+                        node.oscillators.forEach(osc => {
+                            try { osc.stop(); } catch(e) {}
+                        });
+                    }, 200);
+                } catch(e) {}
+            });
+            activeNodes = [];
+            
             closeDrawer();
             showNotification("Alarm has been snoozed for 5 minutes.", "info");
         }

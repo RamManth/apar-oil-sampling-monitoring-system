@@ -41,19 +41,84 @@
             padding: 1.5rem;
         }
 
+        /* 3D Flip Card Container */
+        .flip-card {
+            perspective: 1000px;
+            width: 100%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            top: 0;
+            left: 0;
+        }
+
+        .flip-card-front {
+            z-index: 2;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+            z-index: 1;
+        }
+
         .login-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 2.5rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
         }
 
-        .login-card:hover {
+        .flip-card:not(.flipped):hover {
+            transform: translateY(-2px);
+        }
+
+        .flip-card:not(.flipped):hover .login-card {
             border-color: #3b82f6;
             box-shadow: 0 10px 40px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
+        }
+
+        /* Spinner for loading */
+        .spinner-wrapper {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .brand-header {
@@ -144,31 +209,119 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="login-card">
-            <div class="brand-header">
-                <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Industries Logo" class="brand-logo-img">
-                <div class="brand-subtitle">Oil Sample Monitoring System</div>
-            </div>
-
-            <!-- Flash messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category if category != 'error' else 'danger' }}" role="alert">
-                            {{ message }}
+        <div class="flip-card">
+            <div class="flip-card-inner">
+                <!-- Front Side: Login Form -->
+                <div class="flip-card-front">
+                    <div class="login-card">
+                        <div class="brand-header">
+                            <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Industries Logo" class="brand-logo-img">
+                            <div class="brand-subtitle">Oil Sample Monitoring System</div>
                         </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
 
-            <form method="POST" action="/login">
-                <div class="mb-4">
-                    <label for="password" class="form-label">ENTER ACCESS PASSWORD</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required autofocus>
+                        <!-- Flash messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category if category != 'error' else 'danger' }}" role="alert">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form id="loginForm" method="POST" action="/login">
+                            <div class="mb-4">
+                                <label for="password" class="form-label">ENTER ACCESS PASSWORD</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required autofocus>
+                            </div>
+                            <button type="submit" class="btn btn-login text-uppercase">Authorize Access</button>
+                        </form>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-login text-uppercase">Authorize Access</button>
-            </form>
+
+                <!-- Back Side: Authorizing Animation -->
+                <div class="flip-card-back">
+                    <div class="login-card d-flex flex-column align-items-center justify-content-center text-center">
+                        <div class="brand-header mb-4">
+                            <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Industries Logo" class="brand-logo-img">
+                            <div class="brand-subtitle text-uppercase font-weight-bold" style="letter-spacing: 2px;">Oil Sample Monitoring System</div>
+                        </div>
+                        <div class="spinner-wrapper mb-4">
+                            <div class="custom-spinner"></div>
+                        </div>
+                        <h5 class="fw-bold mb-2 text-uppercase" style="letter-spacing: 1px; color: var(--text-main);">Authorizing Access</h5>
+                        <p class="text-muted small px-3">Verifying credentials and establishing secure session...</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const flipCard = document.querySelector('.flip-card');
+            const frontCard = document.querySelector('.flip-card-front');
+            const backCard = document.querySelector('.flip-card-back');
+            const loginForm = document.getElementById('loginForm');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.querySelector('.btn-login');
+
+            // Dynamically match the card heights to prevent page layout shifting during 3D rotation
+            const adjustHeight = () => {
+                if (frontCard && flipCard && backCard) {
+                    const frontLoginCard = frontCard.querySelector('.login-card');
+                    if (frontLoginCard) {
+                        // Reset heights to auto temporarily to measure natural unconstrained height
+                        frontLoginCard.style.height = 'auto';
+                        frontCard.style.height = 'auto';
+                        flipCard.style.height = 'auto';
+
+                        // Measure the correct content height of the card
+                        const height = frontLoginCard.offsetHeight;
+
+                        // Lock the parent container to this height
+                        flipCard.style.height = height + 'px';
+
+                        // Restore stretching styles for 3D flip card structure
+                        frontCard.style.height = '100%';
+                        frontLoginCard.style.height = '100%';
+                        backCard.style.height = '100%';
+                    }
+                }
+            };
+
+            // Run height adjustment after images/elements load
+            adjustHeight();
+            window.addEventListener('resize', adjustHeight);
+            
+            // Re-adjust after a tiny delay to ensure proper font/image rendering
+            setTimeout(adjustHeight, 150);
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    // Standard HTML5 validation check
+                    if (!loginForm.checkValidity()) {
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    
+                    // Trigger flipping animation
+                    flipCard.classList.add('flipped');
+                    
+                    // Make input read-only and disable submit button to prevent double-submit,
+                    // but do not disable the input completely or it won't be sent in the POST request.
+                    passwordInput.readOnly = true;
+                    submitBtn.disabled = true;
+                    
+                    // Proceed to actual backend authentication after animation duration (800ms)
+                    setTimeout(() => {
+                        loginForm.submit();
+                    }, 800);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

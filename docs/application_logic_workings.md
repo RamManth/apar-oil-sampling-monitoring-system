@@ -66,14 +66,15 @@ The alarm system scans the live sheets matrix for incomplete tasks (`Status != '
 
 ### Web Audio & Visual Alert Flow
 1. If there is at least one active alarm in the alert list, an alarm banner appears at the top of the dashboard.
-2. The browser is instructed to load and loop the audio file `static/alarm.wav`.
+2. **Programmatic Wind Chime Synthesis**: The browser programmatically synthesizes a series of pleasant, overlapping wind chime notes using the Web Audio API (specifically constructing a C Major Pentatonic scale). This avoids any dependency on external static audio files.
 3. **Autoplay Bypass**: Modern browsers block programmatic audio playback until the user interacts with the page. To bypass this, the frontend registers single-use listeners on `mousemove`, `keydown`, `click`, `touchstart`, and `scroll`. Upon the first gesture, it triggers `triggerInstantAlarm()`.
-4. **Volume Amplification**: The Web Audio API context (`AudioContext`) is utilized to boost the signal volume by `2.5x` using a `GainNode` before sending it to the speaker destination.
-5. **Snooze System**:
+4. **Realistic Acoustic Modeling**: Each chime note is generated using a combination of sine wave oscillators set to fundamental and non-harmonic frequency ratios (simulating physical metal tubes). Individual gain envelopes dictate exponential decay (higher frequencies decay faster) for a natural, non-irritating ring-out.
+5. **Continuous Organic Scheduling**: A randomized interval (1.2s to 1.8s) triggers the next chime sequence, resulting in a gentle, alerting, yet non-irritating background audio texture.
+6. **Snooze System**:
    * Users can click "Snooze Alarm (5m)".
-   * This pauses the audio and sets a timestamp in the browser's `localStorage` (`alarmSnoozeExpiry = Date.now() + 5 minutes`).
+   * This cancels the scheduled chime queue, triggers a fast fade-out of active oscillators, and sets a timestamp in the browser's `localStorage` (`alarmSnoozeExpiry = Date.now() + 5 minutes`).
    * When the page loads or refreshes, the script checks if the snooze has expired. If it hasn't, the audio is suppressed.
-6. **Task Resolution**:
+7. **Task Resolution**:
    * Each alert row displays a **Job Done ✓** button.
    * Clicking this submits a request to `/mark_done/<id>`.
    * The backend searches for the target ID in the spreadsheet, replaces the status cell in Column O with `"Done"`, and redirects back to the main portal. This resolves the alarm and immediately halts the audio alert.

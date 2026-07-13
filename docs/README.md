@@ -49,7 +49,7 @@ apar-oil-sampling-monitoring-system/
 │   ├── google_sheets_setup.md  # Google Sheets setup instructions
 │   └── application_logic_workings.md # Detailed breakdown of code logic
 ├── static/
-│   └── alarm.wav               # Audio alert file for deadlines
+│   └── apar_logo_dark.png      # Logo image asset used for themes/login
 └── templates/
     └── form.html               # Frontend dashboard template (Bootstrap 5)
 ```
