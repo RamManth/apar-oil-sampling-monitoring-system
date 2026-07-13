@@ -1,10 +1,16 @@
 import os
+import json
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=os.path.join(BASE_DIR, 'static')
+)
 app.secret_key = os.urandom(24)
 
 # 🔴 CONFIGURATION: Replace with the single ID from your Google Sheet URL
@@ -17,10 +23,18 @@ SCOPES = [
 ]
 
 def get_sheets_service():
-    """Authenticates using credentials.json and builds the Google Sheets connection."""
-    if not os.path.exists(CREDENTIALS_FILE):
-        raise FileNotFoundError("Missing credentials.json file in project root folder.")
-    creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+    """Authenticates using environment variable or credentials.json and builds the Google Sheets connection."""
+    service_account_info = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if service_account_info:
+        try:
+            info = json.loads(service_account_info)
+            creds = Credentials.from_service_account_info(info, scopes=SCOPES)
+        except Exception as e:
+            raise ValueError(f"Failed to load credentials from GOOGLE_SERVICE_ACCOUNT_JSON: {e}")
+    else:
+        if not os.path.exists(CREDENTIALS_FILE):
+            raise FileNotFoundError("Missing credentials.json file in project root folder or GOOGLE_SERVICE_ACCOUNT_JSON env variable.")
+        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     return build('sheets', 'v4', credentials=creds).spreadsheets()
 
 def check_upcoming_alarms():
