@@ -11,3 +11,9 @@ __pycache__/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Secrets and environment configurations
+credentials.json
+.env
+*.env
+

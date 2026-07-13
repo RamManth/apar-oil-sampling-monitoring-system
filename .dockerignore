@@ -1,0 +1,22 @@
+# Exclude Git files
+.git
+.gitignore
+
+# Exclude secrets and configurations
+credentials.json
+.env
+*.env
+vercel.json
+
+# Exclude local media/spreadsheets
+*.xlsx
+*.xlsx.tmp
+
+# Exclude caches and builds
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.dockerignore
+docs/

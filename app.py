@@ -1,7 +1,8 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash
+import pytz
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
@@ -11,12 +12,13 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static')
 )
-app.secret_key = os.urandom(24)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "apar_default_secret_key_for_dev_only")
+DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "apar2026")
 
 # 🔴 CONFIGURATION: Replace with the single ID from your Google Sheet URL
-SPREADSHEET_ID = "1baRT4upMcOCyZjVSNsw0RLiT5A5z1MDfsTPYfyg35xo"
+SPREADSHEET_ID = os.environ.get("GOOGLE_SPREADSHEET_ID", "1baRT4upMcOCyZjVSNsw0RLiT5A5z1MDfsTPYfyg35xo")
 
-CREDENTIALS_FILE = "credentials.json"
+CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_FILE", "credentials.json")
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive.readonly'
@@ -45,7 +47,8 @@ def check_upcoming_alarms():
         result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:O").execute()
         rows = result.get('values', [])
 
-        today_dt = datetime.now()
+        ist = pytz.timezone("Asia/Kolkata")
+        today_dt = datetime.now(ist)
         valid_alarm_dates = [
             today_dt.strftime("%d-%m-%Y"),                          
             (today_dt + timedelta(days=1)).strftime("%d-%m-%Y"),     
@@ -101,7 +104,7 @@ def get_handlers_status():
         h_rows = h_result.get('values', [])
         
         for r in h_rows:
-            if r:
+            if r and len(r) > 0 and str(r[0]).strip():
                 handlers.append({"name": str(r[0]).strip(), "disabled": False})
 
         # Step 2: Correlate active main sheet tracking allocations to check for duplicates/pendings
@@ -159,8 +162,14 @@ def evaluation_form():
 
         try:
             current_data = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:A").execute()
-            next_id = len(current_data.get('values', [])) + 1
-        except Exception:
+            values = current_data.get('values', [])
+            numeric_ids = []
+            for v in values:
+                if v and str(v[0]).isdigit():
+                    numeric_ids.append(int(v[0]))
+            next_id = max(numeric_ids) + 1 if numeric_ids else 1
+        except Exception as e:
+            print(f"⚠️ Error fetching IDs, fallback to sequential increment: {e}")
             next_id = 1
 
         new_row = [
@@ -170,15 +179,17 @@ def evaluation_form():
             form_data["application_details"], form_data["test_parameters"], deadline_date, "Pending"
         ]
 
-        body = {'values': [new_row]}
-        service.values().append(
-            spreadsheetId=SPREADSHEET_ID, 
-            range="Evaluation Data Rowwise!A6", 
-            valueInputOption="RAW", 
-            body=body
-        ).execute()
-
-        flash("Submission synced directly to Google Sheets!", "success")
+        try:
+            body = {'values': [new_row]}
+            service.values().append(
+                spreadsheetId=SPREADSHEET_ID, 
+                range="Evaluation Data Rowwise!A6", 
+                valueInputOption="RAW", 
+                body=body
+            ).execute()
+            flash("Submission synced directly to Google Sheets!", "success")
+        except Exception as e:
+            flash(f"Sync failed! Failed to write to Google Sheets: {e}", "danger")
         return redirect(url_for('evaluation_form'))
 
     active_alarms = check_upcoming_alarms()
@@ -194,7 +205,7 @@ def mark_done(record_id):
         
         row_target = None
         for idx, row_id_list in enumerate(ids):
-            if row_id_list and int(row_id_list[0]) == record_id:
+            if row_id_list and str(row_id_list[0]).isdigit() and int(row_id_list[0]) == record_id:
                 row_target = idx + 6 
                 break
 
@@ -210,6 +221,32 @@ def mark_done(record_id):
     except Exception as e:
         flash(f"Cloud update error: {e}", "danger")
     return redirect(url_for('evaluation_form'))
+
+@app.before_request
+def require_login():
+    allowed_endpoints = ['login', 'static']
+    if request.endpoint and request.endpoint not in allowed_endpoints and not session.get('authenticated'):
+        return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if session.get('authenticated'):
+        return redirect(url_for('evaluation_form'))
+    if request.method == 'POST':
+        password = request.form.get("password", "")
+        if password == DASHBOARD_PASSWORD:
+            session['authenticated'] = True
+            flash("Successfully logged in!", "success")
+            return redirect(url_for('evaluation_form'))
+        else:
+            flash("Invalid password, please try again.", "danger")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('authenticated', None)
+    flash("Logged out successfully.", "success")
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5001, debug=True)

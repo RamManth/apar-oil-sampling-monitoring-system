@@ -9,12 +9,12 @@ services:
     # Env variables can be loaded from a local .env file or host environment
     environment:
       - GOOGLE_SERVICE_ACCOUNT_JSON
-    # Mount credentials.json locally into the container for easy testing without rebuilds
-    volumes:
-      - type: bind
-        source: ./credentials.json
-        target: /app/credentials.json
-        read_only: true
-        # If credentials.json is not present locally (e.g. using environment variable),
-        # docker-compose allows running without it if we handle it, but bind mount will fail if file is missing.
-        # So we can keep it commented or configure it appropriately.
+    # OPTIONAL: Mount credentials.json locally into the container for easy local testing.
+    # Uncomment the lines below ONLY if you have a local credentials.json file.
+    # Otherwise, it will fail to start if the file is missing (use GOOGLE_SERVICE_ACCOUNT_JSON instead).
+    # volumes:
+    #   - type: bind
+    #     source: ./credentials.json
+    #     target: /app/credentials.json
+    #     read_only: true
+
