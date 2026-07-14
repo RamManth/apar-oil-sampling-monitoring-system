@@ -1,10 +1,57 @@
 import os
 import json
+import smtplib
+import threading
+import time
 from datetime import datetime, timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import pytz
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+
+class SheetsCache:
+    def __init__(self, ttl_seconds=10):
+        self.ttl = ttl_seconds
+        self.data = {}
+        self.last_fetched = {}
+        self.lock = threading.Lock()
+        
+    def get(self, key):
+        with self.lock:
+            if key in self.data:
+                if time.time() - self.last_fetched[key] < self.ttl:
+                    return self.data[key]
+            return None
+            
+    def set(self, key, value):
+        with self.lock:
+            self.data[key] = value
+            self.last_fetched[key] = time.time()
+            
+    def clear(self):
+        with self.lock:
+            self.data.clear()
+            self.last_fetched.clear()
+
+sheets_cache = SheetsCache(ttl_seconds=10)
+
+
+# Helper function to load environment variables from .env / .env.local without external packages
+def load_env_file(filepath=".env"):
+    if os.path.exists(filepath):
+        with open(filepath, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    key = key.strip()
+                    val = val.strip().strip('"').strip("'")
+                    os.environ[key] = val
+
+load_env_file(".env")
+load_env_file(".env.local")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
@@ -24,6 +71,33 @@ SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly'
 ]
 
+# SMTP Configuration
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", SMTP_USERNAME)
+
+SENT_LOG_FILE = os.path.join(BASE_DIR, "sent_emails_log.json")
+
+def get_sent_emails():
+    try:
+        if os.path.exists(SENT_LOG_FILE):
+            with open(SENT_LOG_FILE, "r") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+def save_sent_email(log_key, today_str):
+    emails = get_sent_emails()
+    emails[log_key] = today_str
+    try:
+        with open(SENT_LOG_FILE, "w") as f:
+            json.dump(emails, f)
+    except Exception as e:
+        print(f"Error saving sent email log: {e}")
+
 def get_sheets_service():
     """Authenticates using environment variable or credentials.json and builds the Google Sheets connection."""
     service_account_info = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
@@ -39,13 +113,121 @@ def get_sheets_service():
         creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     return build('sheets', 'v4', credentials=creds).spreadsheets()
 
+def get_handler_email_map():
+    """Fetches the handler email map from the Handlers Directory."""
+    email_map = {}
+    try:
+        cached_rows = sheets_cache.get("handlers_directory")
+        if cached_rows is not None:
+            h_rows = cached_rows
+        else:
+            service = get_sheets_service()
+            h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:B").execute()
+            h_rows = h_result.get('values', [])
+            sheets_cache.set("handlers_directory", h_rows)
+        for r in h_rows:
+            if r and len(r) > 0 and str(r[0]).strip():
+                name = str(r[0]).strip().lower()
+                email = str(r[1]).strip() if len(r) > 1 and str(r[1]).strip() else f"{name.replace(' ', '')}@example.com"
+                email_map[name] = email
+    except Exception as e:
+        print(f"⚠️ Error loading handler email map: {e}")
+    return email_map
+
+def send_handler_email(handler_email, handler_name, job_details, status):
+    """Sends an email warning the handler that their job is close to due."""
+    if not SMTP_USERNAME or not SMTP_PASSWORD:
+        print("⚠️ SMTP credentials not set. Skipping email dispatch.")
+        return False
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"🚨 URGENT: Job #{job_details['id']} is {status}!"
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = handler_email
+
+        html_content = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 20px; }}
+                .container {{ max-width: 600px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+                .header {{ background-color: #111827; color: #ffffff; padding: 20px; text-align: center; }}
+                .header h2 {{ margin: 0; font-size: 1.4rem; letter-spacing: 0.5px; text-transform: uppercase; }}
+                .body {{ padding: 24px; }}
+                .alert {{ background-color: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 600; }}
+                .table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+                .table th {{ background-color: #f1f5f9; text-align: left; padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }}
+                .table td {{ padding: 10px 12px; font-size: 0.9rem; border-bottom: 1px solid #e2e8f0; color: #334155; }}
+                .footer {{ background-color: #f8fafc; padding: 15px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>APAR Oil Sample Monitoring System</h2>
+                </div>
+                <div class="body">
+                    <p>Dear <strong>{handler_name}</strong>,</p>
+                    <div class="alert">
+                        ⚠️ Alert: The job assigned to you is close to its target deadline. Please clear it before the due date.
+                    </div>
+                    <h3>Job Details</h3>
+                    <table class="table">
+                        <tr><th>Job ID</th><td>#{job_details['id']}</td></tr>
+                        <tr><th>Executive</th><td>{job_details['executive_name']}</td></tr>
+                        <tr><th>Customer Details</th><td>{job_details['customer_details']}</td></tr>
+                        <tr><th>Issue Type</th><td>{job_details['issue_type']}</td></tr>
+                        <tr><th>Issue Date</th><td>{job_details['issue_date']}</td></tr>
+                        <tr><th>Product Full Name</th><td>{job_details['product_name']}</td></tr>
+                        <tr><th>Target Deadline</th><td><strong style="color: #ef4444;">{job_details['deadline']}</strong></td></tr>
+                        <tr><th>Urgency Status</th><td><strong>{status}</strong></td></tr>
+                    </table>
+                    <p style="margin-top: 25px; font-size: 0.85rem; color: #64748b;">
+                        Please log in to the dashboard to update the job status once resolved.
+                    </p>
+                </div>
+                <div class="footer">
+                    APAR Industries &copy; 2026. All rights reserved.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, 'html'))
+
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+        else:
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            server.starttls()
+        
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, handler_email, msg.as_string())
+        server.quit()
+        print(f"📧 Notification email successfully sent to {handler_email} for Job #{job_details['id']}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send email to {handler_email}: {e}")
+        return False
+
+def trigger_auto_email_async(handler_email, handler_name, job_details, status):
+    thread = threading.Thread(target=send_handler_email, args=(handler_email, handler_name, job_details, status))
+    thread.daemon = True
+    thread.start()
+
 def check_upcoming_alarms():
     """Scans the live Google Sheet matrix for pending deadlines inside the warning window."""
     alarms = []
     try:
-        service = get_sheets_service()
-        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:O").execute()
-        rows = result.get('values', [])
+        cached_rows = sheets_cache.get("evaluation_data_rows")
+        if cached_rows is not None:
+            rows = cached_rows
+        else:
+            service = get_sheets_service()
+            result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:P").execute()
+            rows = result.get('values', [])
+            sheets_cache.set("evaluation_data_rows", rows)
 
         ist = pytz.timezone("Asia/Kolkata")
         today_dt = datetime.now(ist)
@@ -55,15 +237,17 @@ def check_upcoming_alarms():
             (today_dt + timedelta(days=2)).strftime("%d-%m-%Y")      
         ]
 
+        email_map = get_handler_email_map()
+
         for idx, row in enumerate(rows):
-            while len(row) < 15:
+            while len(row) < 16:
                 row.append("")
 
-            status_val = row[14] # Column O (Index 14)
+            status_val = row[15] # Column P (Index 15)
             if status_val and status_val.strip().lower() == "done":
                 continue
 
-            deadline_val = row[13] # Column N (Index 13)
+            deadline_val = row[14] # Column O (Index 14)
             if not deadline_val:
                 continue
 
@@ -82,14 +266,43 @@ def check_upcoming_alarms():
                 else:
                     status = "WARNING: 2 Days Remaining"
 
+                executive = row[1] if len(row) > 1 else "Unknown"
+                customer = row[4] if len(row) > 4 else "Unknown"
+                handler_name = row[2].strip() if len(row) > 2 else ""
+                handler_email = row[3].strip() if len(row) > 3 else ""
+
+                # Resilient Lookup: Resolve handler email from directory mapping if empty
+                if not handler_email and handler_name:
+                    handler_email = email_map.get(handler_name.lower(), f"{handler_name.lower().replace(' ', '')}@example.com")
+
                 alarms.append({
                     "id": row[0],  
-                    "executive": row[1] if len(row) > 1 else "Unknown",
-                    "customer": row[3] if len(row) > 3 else "Unknown",
+                    "executive": executive,
+                    "customer": customer,
                     "deadline": clean_deadline,
                     "status": status,
                     "sheet_row_index": idx + 6 
                 })
+
+                # Process automatic email alert
+                if handler_email:
+                    job_details = {
+                        "id": row[0].strip(),
+                        "executive_name": executive,
+                        "customer_details": customer,
+                        "issue_type": row[5].strip() if len(row) > 5 else "",
+                        "issue_date": row[6].strip() if len(row) > 6 else "",
+                        "product_name": row[7].strip() if len(row) > 7 else "",
+                        "deadline": clean_deadline,
+                        "status": status_val.strip() if status_val.strip() else "Pending"
+                    }
+                    sent_log = get_sent_emails()
+                    today_str = today_dt.strftime("%Y-%m-%d")
+                    log_key = f"{job_details['id']}_{status}"
+                    if log_key not in sent_log or sent_log[log_key] != today_str:
+                        trigger_auto_email_async(handler_email, handler_name, job_details, status)
+                        save_sent_email(log_key, today_str)
+
     except Exception as e:
         print(f"⚠️ Cloud Alarm Engine warning: {e}")
     return alarms
@@ -98,24 +311,35 @@ def get_handlers_status():
     """Compiles handler options list, pulling dynamically from the Handlers Directory tab."""
     handlers = []
     try:
-        service = get_sheets_service()
-        # Step 1: Fetch handlers from the 'Handlers Directory' tab
-        h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:A").execute()
-        h_rows = h_result.get('values', [])
+        cached_h_rows = sheets_cache.get("handlers_directory")
+        if cached_h_rows is not None:
+            h_rows = cached_h_rows
+        else:
+            service = get_sheets_service()
+            h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:B").execute()
+            h_rows = h_result.get('values', [])
+            sheets_cache.set("handlers_directory", h_rows)
         
         for r in h_rows:
             if r and len(r) > 0 and str(r[0]).strip():
-                handlers.append({"name": str(r[0]).strip(), "disabled": False})
+                name = str(r[0]).strip()
+                email = str(r[1]).strip() if len(r) > 1 and str(r[1]).strip() else f"{name.lower().replace(' ', '')}@example.com"
+                handlers.append({"name": name, "email": email, "disabled": False})
 
-        # Step 2: Correlate active main sheet tracking allocations to check for duplicates/pendings
-        m_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:O").execute()
-        m_rows = m_result.get('values', [])
+        cached_m_rows = sheets_cache.get("evaluation_data_rows")
+        if cached_m_rows is not None:
+            m_rows = cached_m_rows
+        else:
+            service = get_sheets_service()
+            m_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:P").execute()
+            m_rows = m_result.get('values', [])
+            sheets_cache.set("evaluation_data_rows", m_rows)
         
         for row in m_rows:
-            while len(row) < 15:
+            while len(row) < 16:
                 row.append("")
-            allocated_handler = row[2] # Column C
-            status_val = row[14]       # Column O
+            allocated_handler = row[2] # Column C (Index 2)
+            status_val = row[15]       # Column P (Index 15)
             
             if allocated_handler and status_val and status_val.strip().lower() == "pending":
                 for h in handlers:
@@ -127,30 +351,45 @@ def get_handlers_status():
     return handlers
 
 def get_all_jobs():
-    """Fetches all evaluation jobs from the Google Sheet (A6:O)."""
+    """Fetches all evaluation jobs from the Google Sheet (A6:P)."""
     jobs = []
     try:
-        service = get_sheets_service()
-        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:O").execute()
-        rows = result.get('values', [])
+        cached_rows = sheets_cache.get("evaluation_data_rows")
+        if cached_rows is not None:
+            rows = cached_rows
+        else:
+            service = get_sheets_service()
+            result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:P").execute()
+            rows = result.get('values', [])
+            sheets_cache.set("evaluation_data_rows", rows)
+        email_map = get_handler_email_map()
+
         for idx, row in enumerate(rows):
-            while len(row) < 15:
+            while len(row) < 16:
                 row.append("")
             
             # Skip empty or header-like rows
             if not row[0] or not str(row[0]).strip():
                 continue
                 
+            handler_name = row[2].strip() if len(row) > 2 else ""
+            handler_email = row[3].strip() if len(row) > 3 else ""
+
+            # Resilient Lookup: Resolve handler email from directory mapping if empty
+            if not handler_email and handler_name:
+                handler_email = email_map.get(handler_name.lower(), f"{handler_name.lower().replace(' ', '')}@example.com")
+
             jobs.append({
                 "id": row[0].strip(),
                 "executive_name": row[1].strip() if len(row) > 1 else "",
-                "handler_name": row[2].strip() if len(row) > 2 else "",
-                "customer_details": row[3].strip() if len(row) > 3 else "",
-                "issue_type": row[4].strip() if len(row) > 4 else "",
-                "issue_date": row[5].strip() if len(row) > 5 else "",
-                "product_name": row[6].strip() if len(row) > 6 else "",
-                "deadline": row[13].strip() if len(row) > 13 else "",
-                "status": row[14].strip() if len(row) > 14 and row[14].strip() else "Pending",
+                "handler_email": handler_email,
+                "handler_name": handler_name,
+                "customer_details": row[4].strip() if len(row) > 4 else "",
+                "issue_type": row[5].strip() if len(row) > 5 else "",
+                "issue_date": row[6].strip() if len(row) > 6 else "",
+                "product_name": row[7].strip() if len(row) > 7 else "",
+                "deadline": row[14].strip() if len(row) > 14 else "",
+                "status": row[15].strip() if len(row) > 15 and row[15].strip() else "Pending",
                 "sheet_row_index": idx + 6
             })
     except Exception as e:
@@ -172,6 +411,7 @@ def evaluation_form():
     if request.method == 'POST':
         form_data = {
             "executive_name": request.form.get("executive_name", "").strip(),
+            "handler_email": request.form.get("handler_email", "").strip(),
             "handler_name": request.form.get("handler_name", "").strip(),
             "customer_details": request.form.get("customer_details", "").strip(),
             "issue_type": request.form.get("issue_type", "").strip(),
@@ -204,8 +444,8 @@ def evaluation_form():
             next_id = 1
 
         new_row = [
-            next_id, form_data["executive_name"], form_data["handler_name"], form_data["customer_details"], form_data["issue_type"],
-            formatted_issue_date, form_data["product_name"], form_data["machine_collected"],
+            next_id, form_data["executive_name"], form_data["handler_name"], form_data["handler_email"], form_data["customer_details"],
+            form_data["issue_type"], formatted_issue_date, form_data["product_name"], form_data["machine_collected"],
             form_data["point_of_collection"], form_data["quantity_sent"], form_data["competitor_info"],
             form_data["application_details"], form_data["test_parameters"], deadline_date, "Pending"
         ]
@@ -218,6 +458,7 @@ def evaluation_form():
                 valueInputOption="RAW", 
                 body=body
             ).execute()
+            sheets_cache.clear()  # Clear cache on new write
             flash("Submission synced directly to Google Sheets!", "success")
         except Exception as e:
             flash(f"Sync failed! Failed to write to Google Sheets: {e}", "danger")
@@ -245,10 +486,11 @@ def mark_done(record_id):
             body = {'values': [["Done"]]}
             service.values().update(
                 spreadsheetId=SPREADSHEET_ID,
-                range=f"Evaluation Data Rowwise!O{row_target}",
+                range=f"Evaluation Data Rowwise!P{row_target}",
                 valueInputOption="RAW",
                 body=body
             ).execute()
+            sheets_cache.clear()  # Clear cache on write
             flash(f"Task ID #{record_id} successfully updated to 'Done' on Google Sheets!", "success")
     except Exception as e:
         flash(f"Cloud update error: {e}", "danger")
@@ -272,13 +514,89 @@ def update_status(record_id):
             body = {'values': [[new_status]]}
             service.values().update(
                 spreadsheetId=SPREADSHEET_ID,
-                range=f"Evaluation Data Rowwise!O{row_target}",
+                range=f"Evaluation Data Rowwise!P{row_target}",
                 valueInputOption="RAW",
                 body=body
             ).execute()
+            sheets_cache.clear()  # Clear cache on write
             return {"success": True}
         else:
             return {"success": False, "error": f"Record with ID {record_id} not found"}, 404
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+@app.route('/shoot_email/<int:record_id>', methods=['POST'])
+def shoot_email(record_id):
+    try:
+        service = get_sheets_service()
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:P").execute()
+        rows = result.get('values', [])
+        
+        job_row = None
+        for idx, row in enumerate(rows):
+            if row and str(row[0]).isdigit() and int(row[0]) == record_id:
+                while len(row) < 16:
+                    row.append("")
+                job_row = row
+                break
+                
+        if not job_row:
+            return {"success": False, "error": f"Job #{record_id} not found"}, 404
+            
+        handler_name = job_row[2].strip()
+        handler_email = job_row[3].strip()
+        
+        # Resilient lookup if email is missing in the row but handler name exists
+        if not handler_email and handler_name:
+            email_map = get_handler_email_map()
+            handler_email = email_map.get(handler_name.lower(), f"{handler_name.lower().replace(' ', '')}@example.com")
+            
+        if not handler_email:
+            return {"success": False, "error": "No email address found for this handler"}, 400
+            
+        job_details = {
+            "id": job_row[0].strip(),
+            "executive_name": job_row[1].strip(),
+            "customer_details": job_row[4].strip(),
+            "issue_type": job_row[5].strip(),
+            "issue_date": job_row[6].strip(),
+            "product_name": job_row[7].strip(),
+            "deadline": job_row[14].strip(),
+            "status": job_row[15].strip()
+        }
+        
+        # Determine status description
+        status_desc = "MANUAL NOTIFICATION"
+        if job_details["status"].lower() == "done":
+            status_desc = "RESOLVED (Manually Sent)"
+        else:
+            ist = pytz.timezone("Asia/Kolkata")
+            today_dt = datetime.now(ist)
+            clean_deadline = str(job_details["deadline"]).strip().split()[0]
+            try:
+                if "-" in clean_deadline and clean_deadline.index("-") == 4:
+                    clean_deadline = datetime.strptime(clean_deadline, "%Y-%m-%d").strftime("%d-%m-%Y")
+            except Exception:
+                pass
+                
+            today_str = today_dt.strftime("%d-%m-%Y")
+            day1_str = (today_dt + timedelta(days=1)).strftime("%d-%m-%Y")
+            day2_str = (today_dt + timedelta(days=2)).strftime("%d-%m-%Y")
+            
+            if clean_deadline == today_str:
+                status_desc = "CRITICAL: DUE TODAY"
+            elif clean_deadline == day1_str:
+                status_desc = "URGENT: 1 Day Remaining"
+            elif clean_deadline == day2_str:
+                status_desc = "WARNING: 2 Days Remaining"
+            else:
+                status_desc = f"PENDING (Due on {clean_deadline})"
+        
+        success = send_handler_email(handler_email, handler_name, job_details, status_desc)
+        if success:
+            return {"success": True}
+        else:
+            return {"success": False, "error": "Failed to dispatch email. Check SMTP configuration credentials on server."}, 500
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
 

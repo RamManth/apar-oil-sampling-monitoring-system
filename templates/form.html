@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APAR - Oil Sample Monitoring System Portal</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -324,14 +325,28 @@
         /* View selector tabs */
         .view-selector-tabs {
             border-bottom: 1px solid #cbd5e1;
+            display: flex;
+            width: 100%;
+            background-color: #f8fafc;
         }
         .view-tab-btn {
+            flex: 1;
             background-color: transparent;
-            color: #64748b;
-            border-bottom: 3px solid transparent !important;
+            color: #475569;
+            border: none;
+            border-bottom: 4px solid transparent !important;
             outline: none;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 1.1rem 1rem !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .view-tab-btn:hover {
             color: var(--accent);
@@ -340,7 +355,7 @@
         .view-tab-btn.active {
             color: var(--accent);
             background-color: #ffffff;
-            border-bottom: 3px solid var(--accent) !important;
+            border-bottom: 4px solid var(--accent) !important;
         }
 
         /* Status badges and buttons in dashboard */
@@ -373,6 +388,186 @@
         .btn-status-done:hover {
             background-color: #f1f5f9;
             color: #334155;
+        }
+
+        /* Responsive Table Container Wrapper to allow border radius + horizontal scroll */
+        .table-container-wrapper {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            background-color: #ffffff;
+        }
+        
+        .table-responsive-scroll {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table thead th {
+            font-weight: 700 !important;
+            font-size: 0.78rem !important;
+            text-transform: uppercase !important;
+            color: #64748b !important;
+            padding: 0.85rem 1rem !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .table tbody td {
+            font-size: 0.85rem !important;
+            color: #334155 !important;
+            padding: 0.85rem 1rem !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+        }
+        
+        /* Non-wrapping action button container */
+        .action-btn-container {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+        
+        .action-btn-container .btn {
+            white-space: nowrap !important;
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            border-radius: 6px !important;
+            padding: 0.35rem 0.75rem !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* Metrics dashboard cards styling */
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .metric-details h3 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .metric-details p {
+            margin: 0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-blue { border-left: 4px solid #3b82f6; }
+        .metric-blue .metric-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        
+        .metric-amber { border-left: 4px solid #f59e0b; }
+        .metric-amber .metric-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+        .metric-emerald { border-left: 4px solid #10b981; }
+        .metric-emerald .metric-icon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+        .metric-rose { border-left: 4px solid #f43f5e; }
+        .metric-rose .metric-icon { background: rgba(244, 63, 94, 0.1); color: #f43f5e; }
+
+        /* Search and filter controls bar */
+        .filter-bar {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .filter-group label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-input, .filter-select {
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem !important;
+            color: #1e293b !important;
+        }
+
+        /* Chart card styling */
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 </head>
@@ -438,14 +633,15 @@
     </div>
 
     <!-- Main Container -->
-    <div class="container my-4" style="max-width: 1040px;">
+    <div class="container-fluid my-4 px-3 px-md-5" style="max-width: 1500px;">
         <div class="card form-card">
             <!-- Brand Header -->
-            <div class="brand-header d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR" style="height: 28px; width: auto;">
+            <div class="brand-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Logo" style="height: 32px; width: auto;">
+                    <div style="width: 2px; height: 24px; background-color: rgba(255, 255, 255, 0.15);"></div>
+                    <h4 class="text-uppercase m-0 fw-bold" style="font-size: 1.15rem; letter-spacing: 0.5px;">APAR - Oil Sample Monitoring System</h4>
                 </div>
-                <h4 class="text-uppercase text-center flex-grow-1">APAR - Oil Sample Monitoring System</h4>
                 <div class="d-flex align-items-center gap-3">
                     <!-- Bell Button with badge -->
                     <button id="notification-bell-btn" class="btn btn-link position-relative p-1 text-white border-0 {% if active_alarms %}notification-bell-pulse{% endif %}" style="text-decoration: none; outline: none; transition: transform 0.2s;" onclick="toggleDrawer()">
@@ -463,14 +659,14 @@
             </div>
 
             <!-- View Selector Tabs -->
-            <div class="view-selector-tabs d-flex border-bottom" style="background-color: #f8fafc;">
-                <button type="button" class="view-tab-btn active px-4 py-3 fw-bold border-0 text-uppercase" id="tab-sample-entry" onclick="switchView('sample-entry')" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+            <div class="view-selector-tabs">
+                <button type="button" class="view-tab-btn active" id="tab-sample-entry" onclick="switchView('sample-entry')">
                     📝 Sample Entry
                 </button>
-                <button type="button" class="view-tab-btn px-4 py-3 fw-bold border-0 text-uppercase" id="tab-data-checklist" onclick="switchView('data-checklist')" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                <button type="button" class="view-tab-btn" id="tab-data-checklist" onclick="switchView('data-checklist')">
                     📋 Data Check List
                 </button>
-                <button type="button" class="view-tab-btn px-4 py-3 fw-bold border-0 text-uppercase" id="tab-about-software" onclick="switchView('about-software')" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                <button type="button" class="view-tab-btn" id="tab-about-software" onclick="switchView('about-software')">
                     ℹ️ About Software
                 </button>
             </div>
@@ -495,14 +691,15 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
-                            <select name="handler_name" class="form-select" required>
+                            <select name="handler_name" id="handler_name" class="form-select" required>
                                 <option value="" disabled selected>Select handler...</option>
                                 {% for handler in handlers_list %}
-                                    <option value="{{ handler.name }}" {% if handler.disabled %}disabled style="color: #cbd5e1; background-color: #f1f5f9;"{% endif %}>
+                                    <option value="{{ handler.name }}" data-email="{{ handler.email }}" {% if handler.disabled %}disabled style="color: #cbd5e1; background-color: #f1f5f9;"{% endif %}>
                                         {{ handler.name }} {% if handler.disabled %}(Locked/Pending){% endif %}
                                     </option>
                                 {% endfor %}
                             </select>
+                            <input type="hidden" name="handler_email" id="handler_email">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Customer Details / Segment<span class="required-dot">*</span></label>
@@ -595,58 +792,137 @@
 
                 <!-- VIEW 2: Data Check List (Jobs Dashboard) -->
                 <div id="view-data-checklist" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="fw-bold m-0 text-uppercase" style="font-size: 0.85rem; color: var(--form-text); letter-spacing: 0.5px;">Active Monitoring Ledger</h5>
                         <span class="badge bg-secondary text-uppercase py-1.5 px-3" style="font-size: 0.7rem; border-radius: 6px; letter-spacing: 0.5px;">{{ all_jobs|length }} Jobs Total</span>
                     </div>
-                    
-                    <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 0.82rem;">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">ID</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Executive</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Handler</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Customer Details</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Issue Type</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Issue Date</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Product Full Name</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem;">Status</th>
-                                    <th scope="col" style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: #64748b; padding: 0.75rem 1rem; text-align: center;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if all_jobs %}
-                                    {% for job in all_jobs %}
-                                    <tr id="job-row-{{ job.id }}" style="transition: background-color 0.2s;">
-                                        <td class="fw-bold" style="color: #0f172a; padding: 0.75rem 1rem;">#{{ job.id }}</td>
-                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.executive_name }}</td>
-                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.handler_name }}</td>
-                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.customer_details }}</td>
-                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.issue_type }}</td>
-                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.issue_date }}</td>
-                                        <td style="color: #334155; padding: 0.75rem 1rem;">{{ job.product_name }}</td>
-                                        <td style="padding: 0.75rem 1rem;">
-                                            <span id="badge-{{ job.id }}" class="badge rounded-pill px-2.5 py-1.5 status-badge-item" 
-                                                  data-status="{{ job.status }}" 
-                                                  style="font-size: 0.68rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
-                                                {{ job.status }}
-                                            </span>
-                                        </td>
-                                        <td style="padding: 0.75rem 1rem; text-align: center;">
-                                            <button class="btn btn-sm action-btn-toggle" id="btn-{{ job.id }}" onclick="toggleJobStatus({{ job.id }}, '{{ job.status }}')" style="font-size: 0.72rem; border-radius: 6px; padding: 0.3rem 0.6rem; font-weight: 600; transition: all 0.2s;">
-                                                Loading...
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
+
+                    <!-- Metrics Container -->
+                    <div class="metrics-container">
+                        <div class="metric-card metric-blue">
+                            <div class="metric-icon">📋</div>
+                            <div class="metric-details">
+                                <h3 id="stat-total-jobs">0</h3>
+                                <p>Total Jobs</p>
+                            </div>
+                        </div>
+                        <div class="metric-card metric-amber">
+                            <div class="metric-icon">⏳</div>
+                            <div class="metric-details">
+                                <h3 id="stat-pending-jobs">0</h3>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                        <div class="metric-card metric-emerald">
+                            <div class="metric-icon">✅</div>
+                            <div class="metric-details">
+                                <h3 id="stat-completed-jobs">0</h3>
+                                <p>Completed</p>
+                            </div>
+                        </div>
+                        <div class="metric-card metric-rose">
+                            <div class="metric-icon">🚨</div>
+                            <div class="metric-details">
+                                <h3 id="stat-alarms">0</h3>
+                                <p>Timeline Alerts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter & Search Bar -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label for="ledger-search">Search Ledger</label>
+                            <input type="text" id="ledger-search" class="form-control filter-input" placeholder="Search ID, Customer, Executive, Product...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="ledger-filter-status">Filter Status</label>
+                            <select id="ledger-filter-status" class="form-select filter-select">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="ledger-filter-handler">Filter Handler</label>
+                            <select id="ledger-filter-handler" class="form-select filter-select">
+                                <option value="all">All Handlers</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-container-wrapper">
+                        <div class="table-responsive-scroll">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
                                     <tr>
-                                        <td colspan="9" class="text-center text-muted py-4" style="padding: 1.5rem;">No active jobs found in the ledger.</td>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Executive</th>
+                                        <th scope="col">Handler</th>
+                                        <th scope="col">Handler Email</th>
+                                        <th scope="col">Customer Details</th>
+                                        <th scope="col">Issue Type</th>
+                                        <th scope="col">Issue Date</th>
+                                        <th scope="col">Product Full Name</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col" style="text-align: center;">Action</th>
                                     </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% if all_jobs %}
+                                        {% for job in all_jobs %}
+                                        <tr id="job-row-{{ job.id }}" style="transition: background-color 0.2s;">
+                                            <td class="fw-bold" style="color: #0f172a;">#{{ job.id }}</td>
+                                            <td>{{ job.executive_name }}</td>
+                                            <td>{{ job.handler_name }}</td>
+                                            <td>
+                                                {% if job.handler_email %}
+                                                    <a href="mailto:{{ job.handler_email }}" style="color: var(--accent); text-decoration: none;">{{ job.handler_email }}</a>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ job.customer_details }}</td>
+                                            <td>{{ job.issue_type }}</td>
+                                            <td>{{ job.issue_date }}</td>
+                                            <td>{{ job.product_name }}</td>
+                                            <td>
+                                                <span id="badge-{{ job.id }}" class="badge rounded-pill px-2.5 py-1.5 status-badge-item" 
+                                                      data-status="{{ job.status }}" 
+                                                      style="font-size: 0.68rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                    {{ job.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="action-btn-container">
+                                                    <button class="btn btn-sm action-btn-toggle" id="btn-{{ job.id }}" onclick="toggleJobStatus({{ job.id }}, '{{ job.status }}')">
+                                                        Loading...
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-info" id="email-btn-{{ job.id }}" onclick="shootEmail({{ job.id }})" {% if not job.handler_email %}disabled{% endif %}>
+                                                        ✉️ Shoot Email
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="10" class="text-center text-muted py-4">No active jobs found in the ledger.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Workload Distribution Chart Card -->
+                    <div class="chart-card" style="margin-top: 24px;">
+                        <div class="chart-header">
+                            <span>📊</span> Handler Workload Allocation (Pending vs. Done)
+                        </div>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="workloadChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -784,6 +1060,210 @@
             }
         }
 
+        // Setup Ledger Search & Filtering
+        let workloadChart = null;
+
+        function initLedgerControls() {
+            const searchInput = document.getElementById('ledger-search');
+            const statusSelect = document.getElementById('ledger-filter-status');
+            const handlerSelect = document.getElementById('ledger-filter-handler');
+            
+            if (!searchInput || !statusSelect || !handlerSelect) return;
+
+            // 1. Gather unique handlers from the table rows to populate the filter select
+            const handlerNames = new Set();
+            const tableRows = document.querySelectorAll('#view-data-checklist tbody tr');
+            
+            tableRows.forEach(row => {
+                if (row.cells.length < 9) return;
+                const handlerCell = row.cells[2];
+                if (handlerCell) {
+                    const handlerName = handlerCell.innerText.trim();
+                    if (handlerName && handlerName !== '-' && handlerName !== '') {
+                        handlerNames.add(handlerName);
+                    }
+                }
+            });
+
+            // Populate the handler select
+            Array.from(handlerNames).sort().forEach(handlerName => {
+                const opt = document.createElement('option');
+                opt.value = handlerName.toLowerCase();
+                opt.innerText = handlerName;
+                handlerSelect.appendChild(opt);
+            });
+
+            // 2. Add event listeners for controls
+            searchInput.addEventListener('input', filterLedger);
+            statusSelect.addEventListener('change', filterLedger);
+            handlerSelect.addEventListener('change', filterLedger);
+
+            // 3. Initial filter & stats calculation & chart draw
+            filterLedger();
+        }
+
+        // Active Alarm IDs from Jinja
+        const activeAlarmIds = new Set([{% for alarm in active_alarms %}"{{ alarm.id }}",{% endfor %}]);
+
+        function filterLedger() {
+            const searchQuery = document.getElementById('ledger-search').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('ledger-filter-status').value;
+            const handlerFilter = document.getElementById('ledger-filter-handler').value;
+
+            const tableRows = document.querySelectorAll('#view-data-checklist tbody tr');
+            
+            let visibleCount = 0;
+            let pendingCount = 0;
+            let completedCount = 0;
+            let warningCount = 0;
+
+            const handlerChartData = {};
+
+            tableRows.forEach(row => {
+                if (row.cells.length < 9) return;
+
+                const jobId = row.cells[0].innerText.replace('#', '').trim();
+                const executive = row.cells[1].innerText.toLowerCase();
+                const handler = row.cells[2].innerText.trim();
+                const handlerLower = handler.toLowerCase();
+                const customer = row.cells[4].innerText.toLowerCase();
+                const product = row.cells[7].innerText.toLowerCase();
+                
+                const badge = row.querySelector('.status-badge-item');
+                const status = badge ? badge.getAttribute('data-status').trim().toLowerCase() : '';
+
+                const matchesSearch = !searchQuery || 
+                                      jobId.includes(searchQuery) ||
+                                      executive.includes(searchQuery) ||
+                                      handlerLower.includes(searchQuery) ||
+                                      customer.includes(searchQuery) ||
+                                      product.includes(searchQuery);
+
+                const matchesStatus = statusFilter === 'all' || status === statusFilter;
+                const matchesHandler = handlerFilter === 'all' || handlerLower === handlerFilter;
+
+                if (matchesSearch && matchesStatus && matchesHandler) {
+                    row.style.display = '';
+                    visibleCount++;
+                    
+                    const isDone = status === 'done';
+                    if (isDone) {
+                        completedCount++;
+                    } else {
+                        pendingCount++;
+                    }
+
+                    if (activeAlarmIds.has(jobId)) {
+                        warningCount++;
+                    }
+
+                    if (handler && handler !== '-') {
+                        if (!handlerChartData[handler]) {
+                            handlerChartData[handler] = { pending: 0, completed: 0 };
+                        }
+                        if (isDone) {
+                            handlerChartData[handler].completed++;
+                        } else {
+                            handlerChartData[handler].pending++;
+                        }
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            document.getElementById('stat-total-jobs').innerText = visibleCount;
+            document.getElementById('stat-pending-jobs').innerText = pendingCount;
+            document.getElementById('stat-completed-jobs').innerText = completedCount;
+            document.getElementById('stat-alarms').innerText = warningCount;
+
+            drawWorkloadChart(handlerChartData);
+        }
+
+        function drawWorkloadChart(chartData) {
+            const canvas = document.getElementById('workloadChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const labels = Object.keys(chartData);
+            const pendingDataset = labels.map(name => chartData[name].pending);
+            const completedDataset = labels.map(name => chartData[name].completed);
+
+            if (workloadChart) {
+                workloadChart.data.labels = labels;
+                workloadChart.data.datasets[0].data = pendingDataset;
+                workloadChart.data.datasets[1].data = completedDataset;
+                workloadChart.update();
+            } else {
+                workloadChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Pending Jobs',
+                                data: pendingDataset,
+                                backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                                borderColor: '#f59e0b',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Completed Jobs',
+                                data: completedDataset,
+                                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                                borderColor: '#10b981',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        family: "'Outfit', sans-serif",
+                                        size: 11,
+                                        weight: '600'
+                                    },
+                                    color: '#475569'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: {
+                                    color: '#f1f5f9'
+                                },
+                                ticks: {
+                                    color: '#64748b',
+                                    stepSize: 1,
+                                    precision: 0
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#475569',
+                                    font: {
+                                        family: "'Outfit', sans-serif",
+                                        weight: '600'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
         // Initialize view from localStorage state if present
         window.addEventListener('DOMContentLoaded', () => {
             const savedView = localStorage.getItem('activePortalView');
@@ -797,6 +1277,9 @@
                 const status = badge.getAttribute('data-status');
                 updateRowStatusUI(rowId, status);
             });
+
+            // Initialize searching, filtering and dynamic metrics charts
+            initLedgerControls();
         });
 
         // Update Job Status row styling & button
@@ -1078,6 +1561,55 @@
                 toast.classList.add('hide');
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
+        }
+
+        // Update hidden input when handler select changes
+        const handlerNameSelect = document.getElementById('handler_name');
+        if (handlerNameSelect) {
+            handlerNameSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const email = selectedOption.getAttribute('data-email') || '';
+                const emailInput = document.getElementById('handler_email');
+                if (emailInput) {
+                    emailInput.value = email;
+                }
+            });
+        }
+
+        // Shoot Email function
+        function shootEmail(jobId) {
+            const btn = document.getElementById(`email-btn-${jobId}`);
+            if (!btn) return;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>`;
+            
+            fetch(`/shoot_email/${jobId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => { throw new Error(data.error || 'Failed to shoot email') });
+                }
+                return response.json();
+            })
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                if (data.success) {
+                    showNotification(`Email successfully sent for Job #${jobId}!`, "success");
+                } else {
+                    showNotification(`Failed to send email: ${data.error}`, "danger");
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                showNotification(`Error sending email: ${error.message}`, "danger");
+            });
         }
 
         function triggerManualScan() { window.location.reload(); }
