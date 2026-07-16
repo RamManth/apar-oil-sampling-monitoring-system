@@ -568,6 +568,12 @@ def get_all_jobs():
                 "issue_type": row[5].strip() if len(row) > 5 else "",
                 "issue_date": row[6].strip() if len(row) > 6 else "",
                 "product_name": row[7].strip() if len(row) > 7 else "",
+                "machine_collected": row[8].strip() if len(row) > 8 else "",
+                "point_of_collection": row[9].strip() if len(row) > 9 else "",
+                "quantity_sent": row[10].strip() if len(row) > 10 else "",
+                "competitor_info": row[11].strip() if len(row) > 11 else "",
+                "application_details": row[12].strip() if len(row) > 12 else "",
+                "test_parameters": row[13].strip() if len(row) > 13 else "",
                 "deadline": row[14].strip() if len(row) > 14 else "",
                 "status": row[15].strip() if len(row) > 15 and row[15].strip() else "Pending",
                 "sheet_row_index": idx + 6
@@ -780,6 +786,25 @@ def shoot_email(record_id):
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
 
+@app.route('/download_excel', methods=['POST'])
+def download_excel():
+    import base64
+    from flask import make_response
+    try:
+        b64_data = request.form.get('base64_data')
+        filename = request.form.get('filename', 'APAR_Oil_Sample_Ledger.xlsx')
+        
+        if not b64_data:
+            return "No data provided", 400
+            
+        file_data = base64.b64decode(b64_data)
+        response = make_response(file_data)
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        return f"Error processing download: {str(e)}", 500
+
 def get_serializer():
     return URLSafeTimedSerializer(app.secret_key)
 
@@ -818,7 +843,7 @@ def login():
             session['username'] = username
             session['email'] = user_email
             flash("Successfully logged in!", "success")
-            return redirect(url_for('evaluation_form'))
+            return redirect(url_for('evaluation_form', login='true'))
         else:
             flash("Invalid username or password, please try again.", "danger")
             

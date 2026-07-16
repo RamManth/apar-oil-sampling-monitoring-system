@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APAR - Oil Sample Monitoring System Portal</title>
+    <script>
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('login') === 'true') {
+                sessionStorage.setItem('tab_authenticated', 'true');
+                urlParams.delete('login');
+                const cleanQuery = urlParams.toString();
+                const newUrl = window.location.pathname + (cleanQuery ? '?' + cleanQuery : '') + window.location.hash;
+                window.history.replaceState({}, document.title, newUrl);
+            } else {
+                if (sessionStorage.getItem('tab_authenticated') !== 'true') {
+                    window.location.replace('/logout');
+                }
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -794,7 +810,12 @@
                 <div id="view-data-checklist" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="fw-bold m-0 text-uppercase" style="font-size: 0.85rem; color: var(--form-text); letter-spacing: 0.5px;">Active Monitoring Ledger</h5>
-                        <span class="badge bg-secondary text-uppercase py-1.5 px-3" style="font-size: 0.7rem; border-radius: 6px; letter-spacing: 0.5px;">{{ all_jobs|length }} Jobs Total</span>
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button" class="btn btn-sm btn-success fw-bold text-uppercase px-3" onclick="openExportModal()" style="border-radius: 6px; letter-spacing: 0.5px; background-color: #10b981; border-color: #10b981; font-size: 0.7rem; padding: 6px 12px;">
+                                📊 Export to Excel
+                            </button>
+                            <span class="badge bg-secondary text-uppercase py-1.5 px-3" style="font-size: 0.7rem; border-radius: 6px; letter-spacing: 0.5px;">{{ all_jobs|length }} Jobs Total</span>
+                        </div>
                     </div>
 
                     <!-- Metrics Container -->
@@ -1613,7 +1634,294 @@
         }
 
         function triggerManualScan() { window.location.reload(); }
+
+        // Excel Export Dashboard Functions
+        const allJobsData = {{ all_jobs|tojson }};
+        let exportModalObj = null;
+
+        function openExportModal() {
+            if (!exportModalObj) {
+                exportModalObj = new bootstrap.Modal(document.getElementById('exportModal'));
+            }
+            
+            // Clear filter inputs
+            document.getElementById('export-filter-start').value = '';
+            document.getElementById('export-filter-end').value = '';
+            document.getElementById('export-filter-status').value = 'all';
+            
+            // Populate Handlers Select
+            const handlerSelect = document.getElementById('export-filter-handler');
+            const uniqueHandlers = [...new Set(allJobsData.map(j => j.handler_name).filter(Boolean))].sort();
+            
+            handlerSelect.innerHTML = '<option value="all">All Handlers</option>';
+            uniqueHandlers.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h;
+                opt.textContent = h;
+                handlerSelect.appendChild(opt);
+            });
+            
+            updateExportPreview();
+            exportModalObj.show();
+        }
+
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return null;
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    return new Date(parts[0], parts[1] - 1, parts[2]); // YYYY-MM-DD
+                } else {
+                    return new Date(parts[2], parts[1] - 1, parts[0]); // DD-MM-YYYY
+                }
+            }
+            return null;
+        }
+
+        function updateExportPreview() {
+            const startDateStr = document.getElementById('export-filter-start').value;
+            const endDateStr = document.getElementById('export-filter-end').value;
+            const handler = document.getElementById('export-filter-handler').value;
+            const status = document.getElementById('export-filter-status').value;
+            
+            const filtered = allJobsData.filter(job => {
+                if (status !== 'all' && job.status.toLowerCase() !== status.toLowerCase()) {
+                    return false;
+                }
+                if (handler !== 'all' && job.handler_name !== handler) {
+                    return false;
+                }
+                if (startDateStr || endDateStr) {
+                    const jobDate = parseLocalDate(job.issue_date);
+                    if (!jobDate) return false;
+                    
+                    if (startDateStr) {
+                        const start = parseLocalDate(startDateStr);
+                        if (start) {
+                            start.setHours(0,0,0,0);
+                            if (jobDate < start) return false;
+                        }
+                    }
+                    if (endDateStr) {
+                        const end = parseLocalDate(endDateStr);
+                        if (end) {
+                            end.setHours(23,59,59,999);
+                            if (jobDate > end) return false;
+                        }
+                    }
+                }
+                return true;
+            });
+            
+            const tbody = document.querySelector('#export-preview-table tbody');
+            tbody.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No matching records found. Try adjusting your filters.</td>
+                    </tr>
+                `;
+            } else {
+                filtered.forEach(job => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border-color)';
+                    
+                    const isDone = job.status.toLowerCase() === 'done';
+                    const badgeColor = isDone ? 'var(--success-text)' : 'var(--danger-text)';
+                    const badgeBg = isDone ? 'var(--success-bg)' : 'var(--danger-bg)';
+                    const badgeBorder = isDone ? 'var(--success-border)' : 'var(--danger-border)';
+                    
+                    tr.innerHTML = `
+                        <td style="padding: 12px 16px; font-weight: bold; color: var(--text-main);">#${job.id}</td>
+                        <td style="padding: 12px 16px;">${job.executive_name}</td>
+                        <td style="padding: 12px 16px;">${job.handler_name}</td>
+                        <td style="padding: 12px 16px;">${job.customer_details}</td>
+                        <td style="padding: 12px 16px;">${job.issue_type}</td>
+                        <td style="padding: 12px 16px;">${job.issue_date}</td>
+                        <td style="padding: 12px 16px;">${job.product_name}</td>
+                        <td style="padding: 12px 16px;">
+                            <span class="badge" style="background-color: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; font-size: 0.65rem; text-transform: uppercase;">
+                                ${job.status}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            document.getElementById('export-match-count').textContent = filtered.length;
+        }
+
+        function downloadExcelFile() {
+            const startDateStr = document.getElementById('export-filter-start').value;
+            const endDateStr = document.getElementById('export-filter-end').value;
+            const handler = document.getElementById('export-filter-handler').value;
+            const status = document.getElementById('export-filter-status').value;
+            
+            const filtered = allJobsData.filter(job => {
+                if (status !== 'all' && job.status.toLowerCase() !== status.toLowerCase()) return false;
+                if (handler !== 'all' && job.handler_name !== handler) return false;
+                if (startDateStr || endDateStr) {
+                    const jobDate = parseLocalDate(job.issue_date);
+                    if (!jobDate) return false;
+                    
+                    if (startDateStr) {
+                        const start = parseLocalDate(startDateStr);
+                        if (start) {
+                            start.setHours(0,0,0,0);
+                            if (jobDate < start) return false;
+                        }
+                    }
+                    if (endDateStr) {
+                        const end = parseLocalDate(endDateStr);
+                        if (end) {
+                            end.setHours(23,59,59,999);
+                            if (jobDate > end) return false;
+                        }
+                    }
+                }
+                return true;
+            });
+            
+            if (filtered.length === 0) {
+                alert("No records to export.");
+                return;
+            }
+            
+            const exportData = filtered.map(job => ({
+                "Job ID": job.id,
+                "Executive Name": job.executive_name,
+                "Handler Name": job.handler_name,
+                "Handler Email": job.handler_email,
+                "Customer Details": job.customer_details,
+                "Issue Type": job.issue_type,
+                "Issue Date": job.issue_date,
+                "Product Name": job.product_name,
+                "Machine Collected": job.machine_collected || "",
+                "Point of Collection": job.point_of_collection || "",
+                "Quantity Sent": job.quantity_sent || "",
+                "Competitor's Product Info": job.competitor_info || "",
+                "Application Details": job.application_details || "",
+                "Test Parameters": job.test_parameters || "",
+                "Target Deadline": job.deadline,
+                "Status": job.status
+            }));
+            
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Monitoring Ledger");
+            
+            // Autofit column widths
+            const maxKeys = Object.keys(exportData[0]);
+            const wscols = maxKeys.map(key => {
+                let maxLen = key.length;
+                exportData.forEach(row => {
+                    const val = row[key];
+                    if (val) maxLen = Math.max(maxLen, val.toString().length);
+                });
+                return { wch: maxLen + 3 };
+            });
+            worksheet['!cols'] = wscols;
+            
+            const filename = `APAR_Oil_Sample_Ledger_${new Date().toISOString().slice(0,10).replace(/-/g, "")}.xlsx`;
+            const base64Data = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+            document.getElementById('excel-base64-data').value = base64Data;
+            document.getElementById('excel-filename').value = filename;
+            document.getElementById('excel-download-form').submit();
+        }
+
+        // Add filter change event listeners once DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const startInput = document.getElementById('export-filter-start');
+            const endInput = document.getElementById('export-filter-end');
+            const handlerSelect = document.getElementById('export-filter-handler');
+            const statusSelect = document.getElementById('export-filter-status');
+            
+            if (startInput) startInput.addEventListener('change', updateExportPreview);
+            if (endInput) endInput.addEventListener('change', updateExportPreview);
+            if (handlerSelect) handlerSelect.addEventListener('change', updateExportPreview);
+            if (statusSelect) statusSelect.addEventListener('change', updateExportPreview);
+        });
     </script>
+
+    <!-- Export to Excel Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="background-color: var(--header-bg); border: 1px solid var(--border-color); border-radius: 20px; color: var(--text-main);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title fw-bold text-uppercase" id="exportModalLabel" style="font-size: 0.95rem; letter-spacing: 0.5px; color: var(--accent);">📊 Export Ledger to Excel</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="box-shadow: none; outline: none;"></button>
+                </div>
+                <div class="modal-body" style="padding: 2rem;">
+                    <!-- Filter Section -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label for="export-filter-start" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Start Issue Date</label>
+                            <input type="date" id="export-filter-start" class="form-control" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="export-filter-end" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">End Issue Date</label>
+                            <input type="date" id="export-filter-end" class="form-control" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="export-filter-handler" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Handler</label>
+                            <select id="export-filter-handler" class="form-select" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                                <option value="all">All Handlers</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="export-filter-status" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Job Status</label>
+                            <select id="export-filter-status" class="form-select" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Matches Count Indicator -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            Records Found: <strong id="export-match-count" class="text-info" style="font-size: 1rem;">0</strong>
+                        </div>
+                        <button type="button" class="btn btn-success fw-bold text-uppercase px-4 py-2" onclick="downloadExcelFile()" style="background-color: #10b981; border-color: #10b981; border-radius: 8px; font-size: 0.8rem; letter-spacing: 0.5px;">
+                            📥 Download Excel
+                        </button>
+                    </div>
+
+                    <!-- Preview Table wrapper -->
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; background-color: var(--bg-main);">
+                        <table class="table table-hover align-middle mb-0" id="export-preview-table" style="color: var(--text-main);">
+                            <thead style="position: sticky; top: 0; background-color: var(--header-bg); z-index: 1; border-bottom: 1px solid var(--border-color);">
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">ID</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Executive</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Handler</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Customer Details</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Issue Type</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Issue Date</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Product</th>
+                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Re-rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for backend-assisted file download -->
+    <form id="excel-download-form" action="/download_excel" method="POST" style="display: none;">
+        <input type="hidden" name="base64_data" id="excel-base64-data">
+        <input type="hidden" name="filename" id="excel-filename">
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
