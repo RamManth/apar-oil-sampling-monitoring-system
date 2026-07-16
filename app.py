@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import pytz
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from itsdangerous import URLSafeTimedSerializer
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
@@ -112,6 +113,185 @@ def get_sheets_service():
             raise FileNotFoundError("Missing credentials.json file in project root folder or GOOGLE_SERVICE_ACCOUNT_JSON env variable.")
         creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     return build('sheets', 'v4', credentials=creds).spreadsheets()
+
+def create_users_tab_if_missing(service, spreadsheet_id):
+    """Checks if the Users tab exists. If not, creates it and adds default admin user."""
+    try:
+        sheet_metadata = service.get(spreadsheetId=spreadsheet_id).execute()
+        sheets = sheet_metadata.get('sheets', [])
+        tab_names = [s.get('properties', {}).get('title') for s in sheets]
+        
+        if "Users" not in tab_names:
+            requests = [{
+                'addSheet': {
+                    'properties': {
+                        'title': 'Users'
+                    }
+                }
+            }]
+            service.batchUpdate(spreadsheetId=spreadsheet_id, body={'requests': requests}).execute()
+            
+            # Write headers and default admin user credentials
+            headers = [
+                ["user", "password", "email"],
+                ["admin", "admin123", SMTP_USERNAME or "admin@example.com"]
+            ]
+            service.values().update(
+                spreadsheetId=spreadsheet_id,
+                range="Users!A1:C2",
+                valueInputOption="RAW",
+                body={'values': headers}
+            ).execute()
+            print("Successfully created 'Users' tab with default admin user.")
+    except Exception as e:
+        print(f"⚠️ Error checking/creating 'Users' tab: {e}")
+
+def get_users_list():
+    """Fetches user credentials from Google Sheets Users tab."""
+    cached_users = sheets_cache.get("users_list")
+    if cached_users is not None:
+        return cached_users
+    
+    users = []
+    try:
+        service = get_sheets_service()
+        create_users_tab_if_missing(service, SPREADSHEET_ID)
+        
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Users!A2:C").execute()
+        rows = result.get('values', [])
+        for r in rows:
+            if r and len(r) > 0 and str(r[0]).strip():
+                username = str(r[0]).strip()
+                password = str(r[1]).strip() if len(r) > 1 else ""
+                email = str(r[2]).strip() if len(r) > 2 else ""
+                
+                # Dynamically generate password if empty in the Google Sheet
+                if not password:
+                    first_name = username.split()[0].replace('.', '').lower()
+                    password = f"{first_name}123"
+                    
+                users.append({
+                    "username": username,
+                    "password": password,
+                    "email": email
+                })
+        sheets_cache.set("users_list", users)
+    except Exception as e:
+        print(f"⚠️ Error loading users list: {e}")
+        # Robust fallback default user so they don't get locked out
+        users = [{"username": "admin", "password": "admin123", "email": SMTP_USERNAME or "admin@example.com"}]
+    return users
+
+def update_user_password_in_sheet(username, new_password):
+    """Updates the password for the given user in Google Sheets."""
+    try:
+        service = get_sheets_service()
+        # Fetch the entire column A to find the row index of the user
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Users!A1:A100").execute()
+        rows = result.get('values', [])
+        
+        row_target = None
+        for idx, row in enumerate(rows):
+            if row and row[0].strip().lower() == username.lower():
+                row_target = idx + 1 # 1-indexed row number
+                break
+                
+        if row_target:
+            body = {'values': [[new_password]]}
+            service.values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=f"Users!B{row_target}",
+                valueInputOption="RAW",
+                body=body
+            ).execute()
+            sheets_cache.clear() # Clear cache so new password is loaded
+            print(f"Successfully updated password for user '{username}' on row {row_target}.")
+            return True
+        else:
+            print(f"⚠️ User '{username}' not found in sheet for password update.")
+            return False
+    except Exception as e:
+        print(f"⚠️ Error updating password in Google Sheet: {e}")
+        return False
+
+def send_password_email(user_email, username, password, reset_link):
+    """Sends an email with password recovery details and a reset link to the user."""
+    if not SMTP_USERNAME or not SMTP_PASSWORD:
+        print("⚠️ SMTP credentials not set. Skipping password recovery email.")
+        return False
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "🔒 APAR Oil Sample Monitoring System - Password Recovery & Reset"
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = user_email
+
+        html_content = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 20px; }}
+                .container {{ max-width: 600px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+                .header {{ background-color: #111827; color: #ffffff; padding: 20px; text-align: center; }}
+                .header h2 {{ margin: 0; font-size: 1.4rem; letter-spacing: 0.5px; text-transform: uppercase; }}
+                .body {{ padding: 24px; }}
+                .credentials-box {{ background-color: #f1f5f9; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin: 20px 0; font-size: 1.1rem; }}
+                .reset-btn-wrapper {{ text-align: center; margin: 30px 0; }}
+                .btn-reset {{ background-color: #3b82f6; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }}
+                .btn-reset:hover {{ background-color: #2563eb; }}
+                .link-text {{ font-size: 0.8rem; color: #64748b; word-break: break-all; }}
+                .footer {{ background-color: #f8fafc; padding: 15px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>APAR Oil Sample Monitoring System</h2>
+                </div>
+                <div class="body">
+                    <p>Dear <strong>{username}</strong>,</p>
+                    <p>We received a request to recover and reset the password for your account in the APAR Oil Sample Monitoring System.</p>
+                    <p>Here are your current login credentials:</p>
+                    <div class="credentials-box">
+                        <strong>Username:</strong> <code style="color: #3b82f6;">{username}</code><br>
+                        <strong>Password:</strong> <code style="color: #10b981;">{password}</code>
+                    </div>
+                    <p>To choose a new password, click the button below to secure your account:</p>
+                    <div class="reset-btn-wrapper">
+                        <a href="{reset_link}" class="btn-reset">Reset Your Password</a>
+                    </div>
+                    <p class="link-text">
+                        If the button above does not work, copy and paste this URL into your browser:<br>
+                        <a href="{reset_link}">{reset_link}</a>
+                    </p>
+                    <p style="margin-top: 25px; font-size: 0.85rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                        Please note: This link will expire in 1 hour. If you did not request this recovery, please inform the system administrator.
+                    </p>
+                </div>
+                <div class="footer">
+                    APAR Industries &copy; 2026. All rights reserved.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, 'html'))
+
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+        else:
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            server.starttls()
+        
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, user_email, msg.as_string())
+        server.quit()
+        print(f"📧 Recovery/Reset email successfully sent to {user_email} for user {username}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send recovery email to {user_email}: {e}")
+        return False
+
 
 def get_handler_email_map():
     """Fetches the handler email map from the Handlers Directory."""
@@ -600,9 +780,12 @@ def shoot_email(record_id):
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
 
+def get_serializer():
+    return URLSafeTimedSerializer(app.secret_key)
+
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'static']
+    allowed_endpoints = ['login', 'static', 'forgot_password', 'reset_password']
     if request.endpoint and request.endpoint not in allowed_endpoints and not session.get('authenticated'):
         return redirect(url_for('login'))
 
@@ -610,15 +793,141 @@ def require_login():
 def login():
     if session.get('authenticated'):
         return redirect(url_for('evaluation_form'))
+        
+    users = get_users_list()
+    
     if request.method == 'POST':
+        username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        if password == DASHBOARD_PASSWORD:
+        
+        authenticated = False
+        user_email = ""
+        for u in users:
+            if u["username"].lower() == username.lower() and u["password"] == password:
+                authenticated = True
+                user_email = u["email"]
+                break
+                
+        # Support fallback compatibility for the master admin
+        if not authenticated and username.lower() == "admin" and password == DASHBOARD_PASSWORD:
+            authenticated = True
+            user_email = SMTP_USERNAME or "admin@example.com"
+            
+        if authenticated:
             session['authenticated'] = True
+            session['username'] = username
+            session['email'] = user_email
             flash("Successfully logged in!", "success")
             return redirect(url_for('evaluation_form'))
         else:
-            flash("Invalid password, please try again.", "danger")
-    return render_template('login.html')
+            flash("Invalid username or password, please try again.", "danger")
+            
+    return render_template('login.html', users=users)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if session.get('authenticated'):
+        return redirect(url_for('evaluation_form'))
+        
+    users = get_users_list()
+    
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json() or {}
+            username = data.get("username", "").strip()
+        else:
+            username = request.form.get("username", "").strip()
+            
+        if not username:
+            if request.is_json:
+                return {"success": False, "error": "Please select a user profile first."}, 400
+            flash("Please select a user profile first.", "danger")
+            return render_template('forgot_password.html', users=users)
+            
+        user_info = None
+        for u in users:
+            if u["username"].lower() == username.lower():
+                user_info = u
+                break
+                
+        if not user_info:
+            if request.is_json:
+                return {"success": False, "error": f"User '{username}' not found."}, 404
+            flash(f"User '{username}' not found.", "danger")
+            return render_template('forgot_password.html', users=users)
+            
+        email = user_info["email"]
+        password = user_info["password"]
+        
+        if not email:
+            if request.is_json:
+                return {"success": False, "error": f"No email address configured for user '{username}'."}, 400
+            flash(f"No email address configured for user '{username}'.", "danger")
+            return render_template('forgot_password.html', users=users)
+            
+        # Generate secure timed password reset token
+        serializer = get_serializer()
+        token = serializer.dumps(username, salt='password-reset-salt')
+        
+        # Build absolute reset URL
+        reset_link = url_for('reset_password', token=token, _external=True)
+        
+        # Dispatch recovery email
+        success = send_password_email(email, username, password, reset_link)
+        
+        if success:
+            msg = f"Reset instructions and current password successfully sent to {email}."
+            if request.is_json:
+                return {"success": True, "message": msg}
+            flash(msg, "success")
+            return redirect(url_for('login'))
+        else:
+            err = "Failed to send email. Check SMTP settings."
+            if request.is_json:
+                return {"success": False, "error": err}, 500
+            flash(err, "danger")
+            
+    return render_template('forgot_password.html', users=users)
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    if session.get('authenticated'):
+        return redirect(url_for('evaluation_form'))
+        
+    token = request.args.get('token') or request.form.get('token')
+    if not token:
+        flash("Password reset token is missing.", "danger")
+        return redirect(url_for('login'))
+        
+    serializer = get_serializer()
+    try:
+        # Link expires in 1 hour (3600 seconds)
+        username = serializer.loads(token, salt='password-reset-salt', max_age=3600)
+    except Exception:
+        flash("The password reset link is invalid or has expired.", "danger")
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        new_password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        if not new_password:
+            flash("Password cannot be empty.", "danger")
+            return render_template('reset_password.html', token=token, username=username)
+            
+        if new_password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template('reset_password.html', token=token, username=username)
+            
+        # Update in Google Sheets
+        success = update_user_password_in_sheet(username, new_password)
+        if success:
+            flash("Password successfully reset! Please login with your new password.", "success")
+            return redirect(url_for('login'))
+        else:
+            flash("Failed to update password in Google Sheet. Please try again later.", "danger")
+            
+    return render_template('reset_password.html', token=token, username=username)
 
 @app.route('/logout')
 def logout():
