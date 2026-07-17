@@ -1633,7 +1633,7 @@
             });
         }
 
-        function triggerManualScan() { window.location.reload(); }
+        function triggerManualScan() { window.location.href = '/?force_refresh=true'; }
 
         // Excel Export Dashboard Functions
         const allJobsData = {{ all_jobs|tojson }};

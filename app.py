@@ -13,16 +13,15 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
 class SheetsCache:
-    def __init__(self, ttl_seconds=10):
-        self.ttl = ttl_seconds
+    def __init__(self):
         self.data = {}
         self.last_fetched = {}
         self.lock = threading.Lock()
         
-    def get(self, key):
+    def get(self, key, ttl_seconds=60):
         with self.lock:
             if key in self.data:
-                if time.time() - self.last_fetched[key] < self.ttl:
+                if time.time() - self.last_fetched[key] < ttl_seconds:
                     return self.data[key]
             return None
             
@@ -36,7 +35,7 @@ class SheetsCache:
             self.data.clear()
             self.last_fetched.clear()
 
-sheets_cache = SheetsCache(ttl_seconds=10)
+sheets_cache = SheetsCache()
 
 
 # Helper function to load environment variables from .env / .env.local without external packages
@@ -99,20 +98,30 @@ def save_sent_email(log_key, today_str):
     except Exception as e:
         print(f"Error saving sent email log: {e}")
 
+_sheets_service = None
+_sheets_service_lock = threading.Lock()
+
 def get_sheets_service():
     """Authenticates using environment variable or credentials.json and builds the Google Sheets connection."""
-    service_account_info = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
-    if service_account_info:
-        try:
-            info = json.loads(service_account_info)
-            creds = Credentials.from_service_account_info(info, scopes=SCOPES)
-        except Exception as e:
-            raise ValueError(f"Failed to load credentials from GOOGLE_SERVICE_ACCOUNT_JSON: {e}")
-    else:
-        if not os.path.exists(CREDENTIALS_FILE):
-            raise FileNotFoundError("Missing credentials.json file in project root folder or GOOGLE_SERVICE_ACCOUNT_JSON env variable.")
-        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
-    return build('sheets', 'v4', credentials=creds).spreadsheets()
+    global _sheets_service
+    if _sheets_service is not None:
+        return _sheets_service
+        
+    with _sheets_service_lock:
+        if _sheets_service is None:
+            service_account_info = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+            if service_account_info:
+                try:
+                    info = json.loads(service_account_info)
+                    creds = Credentials.from_service_account_info(info, scopes=SCOPES)
+                except Exception as e:
+                    raise ValueError(f"Failed to load credentials from GOOGLE_SERVICE_ACCOUNT_JSON: {e}")
+            else:
+                if not os.path.exists(CREDENTIALS_FILE):
+                    raise FileNotFoundError("Missing credentials.json file in project root folder or GOOGLE_SERVICE_ACCOUNT_JSON env variable.")
+                creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+            _sheets_service = build('sheets', 'v4', credentials=creds, static_discovery=True).spreadsheets()
+        return _sheets_service
 
 def create_users_tab_if_missing(service, spreadsheet_id):
     """Checks if the Users tab exists. If not, creates it and adds default admin user."""
@@ -148,7 +157,7 @@ def create_users_tab_if_missing(service, spreadsheet_id):
 
 def get_users_list():
     """Fetches user credentials from Google Sheets Users tab."""
-    cached_users = sheets_cache.get("users_list")
+    cached_users = sheets_cache.get("users_list", ttl_seconds=300)
     if cached_users is not None:
         return cached_users
     
@@ -297,7 +306,7 @@ def get_handler_email_map():
     """Fetches the handler email map from the Handlers Directory."""
     email_map = {}
     try:
-        cached_rows = sheets_cache.get("handlers_directory")
+        cached_rows = sheets_cache.get("handlers_directory", ttl_seconds=300)
         if cached_rows is not None:
             h_rows = cached_rows
         else:
@@ -400,7 +409,7 @@ def check_upcoming_alarms():
     """Scans the live Google Sheet matrix for pending deadlines inside the warning window."""
     alarms = []
     try:
-        cached_rows = sheets_cache.get("evaluation_data_rows")
+        cached_rows = sheets_cache.get("evaluation_data_rows", ttl_seconds=60)
         if cached_rows is not None:
             rows = cached_rows
         else:
@@ -491,7 +500,7 @@ def get_handlers_status():
     """Compiles handler options list, pulling dynamically from the Handlers Directory tab."""
     handlers = []
     try:
-        cached_h_rows = sheets_cache.get("handlers_directory")
+        cached_h_rows = sheets_cache.get("handlers_directory", ttl_seconds=300)
         if cached_h_rows is not None:
             h_rows = cached_h_rows
         else:
@@ -506,7 +515,7 @@ def get_handlers_status():
                 email = str(r[1]).strip() if len(r) > 1 and str(r[1]).strip() else f"{name.lower().replace(' ', '')}@example.com"
                 handlers.append({"name": name, "email": email, "disabled": False})
 
-        cached_m_rows = sheets_cache.get("evaluation_data_rows")
+        cached_m_rows = sheets_cache.get("evaluation_data_rows", ttl_seconds=60)
         if cached_m_rows is not None:
             m_rows = cached_m_rows
         else:
@@ -534,7 +543,7 @@ def get_all_jobs():
     """Fetches all evaluation jobs from the Google Sheet (A6:P)."""
     jobs = []
     try:
-        cached_rows = sheets_cache.get("evaluation_data_rows")
+        cached_rows = sheets_cache.get("evaluation_data_rows", ttl_seconds=60)
         if cached_rows is not None:
             rows = cached_rows
         else:
@@ -592,9 +601,12 @@ def calculate_deadline(issue_date_str, issue_type):
 
 @app.route('/', methods=['GET', 'POST'])
 def evaluation_form():
-    service = get_sheets_service()
+    if request.args.get('force_refresh') == 'true':
+        sheets_cache.clear()
+        return redirect(url_for('evaluation_form'))
 
     if request.method == 'POST':
+        service = get_sheets_service()
         form_data = {
             "executive_name": request.form.get("executive_name", "").strip(),
             "handler_email": request.form.get("handler_email", "").strip(),
