@@ -41,12 +41,11 @@ Next Steps & Security Guidelines:
 2. For security reasons, please change your password after your first login. You can reset your password directly using the link below:
 {reset_link}
 
-Regards 
-Ram Manthanwar
-9993519442
-Manipal institute of technology 
-rmanthanwar@yahoo.com
-ram.mitmpl2024@learner.manipal.edu
+Visit Portal Website: https://apar-oil-sampling-monitoring-system-eight.vercel.app/login
+
+Regards,
+APAR Oil Sample Monitoring System Administrator
+{sender_email}
 """
 
     # HTML version with premium styling
@@ -148,6 +147,22 @@ ram.mitmpl2024@learner.manipal.edu
             .btn-reset:hover {{
                 background-color: #1d4ed8;
             }}
+            .btn-website {{
+                background-color: #0f172a;
+                color: #ffffff !important;
+                text-decoration: none;
+                padding: 14px 28px;
+                border-radius: 8px;
+                font-weight: 600;
+                display: inline-block;
+                font-size: 1rem;
+                box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15);
+                transition: background-color 0.2s;
+                margin: 5px;
+            }}
+            .btn-website:hover {{
+                background-color: #1e293b;
+            }}
             .signature-box {{
                 margin-top: 32px;
                 padding-top: 24px;
@@ -188,15 +203,13 @@ ram.mitmpl2024@learner.manipal.edu
                 <p>For security reasons, we highly request and recommend you to change your password immediately after your first login by clicking below:</p>
 
                 <div class="action-wrapper">
-                    <a href="{reset_link}" class="btn-reset">Change Your Password</a>
+                    <a href="{reset_link}" class="btn-reset" style="margin: 5px;">Change Your Password</a>
+                    <a href="https://apar-oil-sampling-monitoring-system-eight.vercel.app/login" class="btn-website">Visit Website</a>
                 </div>
 
-                <div class="signature-box">Regards 
-Ram Manthanwar
-9993519442
-Manipal institute of technology 
-rmanthanwar@yahoo.com
-ram.mitmpl2024@learner.manipal.edu</div>
+                <div class="signature-box">Regards,<br>
+<strong>APAR Oil Sample Monitoring Team</strong><br>
+{sender_email}</div>
             </div>
             <div class="footer">
                 APAR Industries &copy; 2026. All rights reserved.

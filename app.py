@@ -38,8 +38,10 @@ class SheetsCache:
 sheets_cache = SheetsCache()
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Helper function to load environment variables from .env / .env.local without external packages
-def load_env_file(filepath=".env"):
+def load_env_file(filepath):
     if os.path.exists(filepath):
         with open(filepath, "r") as f:
             for line in f:
@@ -50,10 +52,9 @@ def load_env_file(filepath=".env"):
                     val = val.strip().strip('"').strip("'")
                     os.environ[key] = val
 
-load_env_file(".env")
-load_env_file(".env.local")
+load_env_file(os.path.join(BASE_DIR, ".env"))
+load_env_file(os.path.join(BASE_DIR, ".env.local"))
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
     __name__,
     template_folder=os.path.join(BASE_DIR, 'templates'),
@@ -246,8 +247,10 @@ def send_password_email(user_email, username, password, reset_link):
                 .body {{ padding: 24px; }}
                 .credentials-box {{ background-color: #f1f5f9; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin: 20px 0; font-size: 1.1rem; }}
                 .reset-btn-wrapper {{ text-align: center; margin: 30px 0; }}
-                .btn-reset {{ background-color: #3b82f6; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }}
+                .btn-reset {{ background-color: #3b82f6; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); margin: 5px; }}
                 .btn-reset:hover {{ background-color: #2563eb; }}
+                .btn-website {{ background-color: #0f172a; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15); margin: 5px; }}
+                .btn-website:hover {{ background-color: #1e293b; }}
                 .link-text {{ font-size: 0.8rem; color: #64748b; word-break: break-all; }}
                 .footer {{ background-color: #f8fafc; padding: 15px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0; }}
             </style>
@@ -268,6 +271,7 @@ def send_password_email(user_email, username, password, reset_link):
                     <p>To choose a new password, click the button below to secure your account:</p>
                     <div class="reset-btn-wrapper">
                         <a href="{reset_link}" class="btn-reset">Reset Your Password</a>
+                        <a href="https://apar-oil-sampling-monitoring-system-eight.vercel.app/login" class="btn-website">Visit Website</a>
                     </div>
                     <p class="link-text">
                         If the button above does not work, copy and paste this URL into your browser:<br>
@@ -349,6 +353,8 @@ def send_handler_email(handler_email, handler_name, job_details, status):
                 .table th {{ background-color: #f1f5f9; text-align: left; padding: 8px 12px; font-size: 0.8rem; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }}
                 .table td {{ padding: 10px 12px; font-size: 0.9rem; border-bottom: 1px solid #e2e8f0; color: #334155; }}
                 .footer {{ background-color: #f8fafc; padding: 15px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0; }}
+                .btn-website {{ background-color: #0f172a; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15); }}
+                .btn-website:hover {{ background-color: #1e293b; }}
             </style>
         </head>
         <body>
@@ -375,6 +381,9 @@ def send_handler_email(handler_email, handler_name, job_details, status):
                     <p style="margin-top: 25px; font-size: 0.85rem; color: #64748b;">
                         Please log in to the dashboard to update the job status once resolved.
                     </p>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="https://apar-oil-sampling-monitoring-system-eight.vercel.app/login" class="btn-website">Visit Website</a>
+                    </div>
                 </div>
                 <div class="footer">
                     APAR Industries &copy; 2026. All rights reserved.
