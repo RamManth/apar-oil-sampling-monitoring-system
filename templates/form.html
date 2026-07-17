@@ -737,6 +737,8 @@
                                 <option value="Condition Monitoring">Condition Monitoring (+7 Days)</option>
                                 <option value="Complain Handling">Complain Handling (+3 Days)</option>
                                 <option value="Product Benchmarking">Product Benchmarking (+10 Days)</option>
+                                <option value="Ship Sample">Ship Sample (+1 Day)</option>
+                                <option value="Incoming Sample">Incoming Sample (+1 Day)</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -1018,6 +1020,8 @@
             if (issueType === "Condition Monitoring") daysToAdd = 7;
             else if (issueType === "Complain Handling") daysToAdd = 3;
             else if (issueType === "Product Benchmarking") daysToAdd = 10;
+            else if (issueType === "Ship Sample") daysToAdd = 1;
+            else if (issueType === "Incoming Sample") daysToAdd = 1;
 
             const dateParts = issueDateVal.split('-');
             const targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);

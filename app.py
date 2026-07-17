@@ -596,7 +596,13 @@ def calculate_deadline(issue_date_str, issue_type):
         base_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
     except ValueError:
         base_date = datetime.now()
-    days_mapping = {"Condition Monitoring": 7, "Complain Handling": 3, "Product Benchmarking": 10}
+    days_mapping = {
+        "Condition Monitoring": 7,
+        "Complain Handling": 3,
+        "Product Benchmarking": 10,
+        "Ship Sample": 1,
+        "Incoming Sample": 1
+    }
     return (base_date + timedelta(days=days_mapping.get(issue_type, 0))).strftime("%d-%m-%Y")
 
 @app.route('/', methods=['GET', 'POST'])
