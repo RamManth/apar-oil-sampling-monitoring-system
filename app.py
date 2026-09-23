@@ -1536,11 +1536,6 @@ def dev_delete_user():
         flash(f"Failed to delete user: {e}", "danger")
     return redirect(url_for('developer_mode'))
 
-@app.route('/api/index')
-@app.route('/api/index.py')
-def vercel_entry_fallback():
-    return redirect(url_for('login'))
-
 @app.errorhandler(404)
 def handle_404(e):
     print(f"[FLASK 404] path={request.path}, method={request.method}, url={request.url}, environ_path={request.environ.get('PATH_INFO')}")
