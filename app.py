@@ -1134,6 +1134,7 @@ def get_serializer():
 
 @app.before_request
 def require_login():
+    print(f"DEBUG VERCEL REQUEST: path={request.path}, headers={dict(request.headers)}", flush=True)
     allowed_endpoints = [
         'login', 'static', 'forgot_password', 'reset_password',
         'developer_mode', 'developer_login', 'developer_logout',
