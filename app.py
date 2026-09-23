@@ -1134,7 +1134,6 @@ def get_serializer():
 
 @app.before_request
 def require_login():
-    print(f"DEBUG VERCEL REQUEST: path={request.path}, headers={dict(request.headers)}", flush=True)
     allowed_endpoints = [
         'login', 'static', 'forgot_password', 'reset_password',
         'developer_mode', 'developer_login', 'developer_logout',
@@ -1536,6 +1535,11 @@ def dev_delete_user():
             return {"success": False, "error": str(e)}, 500
         flash(f"Failed to delete user: {e}", "danger")
     return redirect(url_for('developer_mode'))
+
+@app.route('/api/index')
+@app.route('/api/index.py')
+def vercel_entry_fallback():
+    return redirect(url_for('login'))
 
 @app.errorhandler(404)
 def handle_404(e):
