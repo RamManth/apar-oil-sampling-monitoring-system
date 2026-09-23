@@ -156,6 +156,34 @@ def create_users_tab_if_missing(service, spreadsheet_id):
     except Exception as e:
         print(f"⚠️ Error checking/creating 'Users' tab: {e}")
 
+def get_tab_sheet_id(service, spreadsheet_id, tab_name):
+    """Retrieves the integer sheetId for a given sheet tab title."""
+    try:
+        sheet_metadata = service.get(spreadsheetId=spreadsheet_id).execute()
+        for s in sheet_metadata.get('sheets', []):
+            if s.get('properties', {}).get('title') == tab_name:
+                return s.get('properties', {}).get('sheetId')
+    except Exception as e:
+        print(f"⚠️ Error fetching sheetId for '{tab_name}': {e}")
+    return None
+
+def delete_sheet_row(service, spreadsheet_id, tab_name, row_1_indexed):
+    """Deletes a 1-indexed row from a sheet tab using deleteDimension."""
+    sheet_id = get_tab_sheet_id(service, spreadsheet_id, tab_name)
+    if sheet_id is None:
+        raise ValueError(f"Sheet tab '{tab_name}' not found")
+    requests = [{
+        'deleteDimension': {
+            'range': {
+                'sheetId': sheet_id,
+                'dimension': 'ROWS',
+                'startIndex': row_1_indexed - 1,
+                'endIndex': row_1_indexed
+            }
+        }
+    }]
+    service.batchUpdate(spreadsheetId=spreadsheet_id, body={'requests': requests}).execute()
+
 def get_users_list():
     """Fetches user credentials from Google Sheets Users tab."""
     cached_users = sheets_cache.get("users_list", ttl_seconds=300)
@@ -191,6 +219,101 @@ def get_users_list():
         # Robust fallback default user so they don't get locked out
         users = [{"username": "admin", "password": "admin123", "email": SMTP_USERNAME or "admin@example.com"}]
     return users
+
+def get_users_detailed():
+    """Fetches all users from Users tab with row indexes and admin metadata."""
+    users = []
+    try:
+        service = get_sheets_service()
+        create_users_tab_if_missing(service, SPREADSHEET_ID)
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Users!A2:C").execute()
+        rows = result.get('values', [])
+        for idx, r in enumerate(rows):
+            if r and len(r) > 0 and str(r[0]).strip():
+                username = str(r[0]).strip()
+                password = str(r[1]).strip() if len(r) > 1 else ""
+                email = str(r[2]).strip() if len(r) > 2 else ""
+                if not password:
+                    first_name = username.split()[0].replace('.', '').lower()
+                    password = f"{first_name}123"
+                users.append({
+                    "row_index": idx + 2,
+                    "username": username,
+                    "password": password,
+                    "email": email,
+                    "is_admin": username.lower() == "admin"
+                })
+    except Exception as e:
+        print(f"⚠️ Error fetching detailed users: {e}")
+        users = [{"row_index": 2, "username": "admin", "password": "admin123", "email": SMTP_USERNAME or "admin@example.com", "is_admin": True}]
+    return users
+
+def add_user_to_sheet(username, password, email):
+    """Adds a new user to the Google Sheets Users tab."""
+    service = get_sheets_service()
+    create_users_tab_if_missing(service, SPREADSHEET_ID)
+    result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Users!A2:A").execute()
+    existing = [str(r[0]).strip().lower() for r in result.get('values', []) if r and str(r[0]).strip()]
+    if username.strip().lower() in existing:
+        raise ValueError(f"User '{username}' already exists.")
+    
+    body = {'values': [[username.strip(), password.strip(), email.strip()]]}
+    service.values().append(
+        spreadsheetId=SPREADSHEET_ID,
+        range="Users!A2",
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+    sheets_cache.clear()
+    return True
+
+def update_user_in_sheet(original_username, new_username, new_password, new_email):
+    """Updates user information in Google Sheets Users tab."""
+    service = get_sheets_service()
+    result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Users!A2:C").execute()
+    rows = result.get('values', [])
+    target_row = None
+    for idx, r in enumerate(rows):
+        if r and str(r[0]).strip().lower() == original_username.strip().lower():
+            target_row = idx + 2
+            break
+    if not target_row:
+        raise ValueError(f"User '{original_username}' not found in sheet.")
+    
+    if original_username.strip().lower() != new_username.strip().lower():
+        if original_username.strip().lower() == "admin":
+            raise ValueError("The master admin account username cannot be renamed.")
+        for r in rows:
+            if r and str(r[0]).strip().lower() == new_username.strip().lower():
+                raise ValueError(f"Username '{new_username}' is already taken.")
+                
+    body = {'values': [[new_username.strip(), new_password.strip(), new_email.strip()]]}
+    service.values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"Users!A{target_row}:C{target_row}",
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+    sheets_cache.clear()
+    return True
+
+def delete_user_from_sheet(username):
+    """Deletes a user row from the Google Sheets Users tab."""
+    if username.strip().lower() == "admin":
+        raise ValueError("The master admin account cannot be deleted.")
+    service = get_sheets_service()
+    result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Users!A2:A").execute()
+    rows = result.get('values', [])
+    target_row = None
+    for idx, r in enumerate(rows):
+        if r and str(r[0]).strip().lower() == username.strip().lower():
+            target_row = idx + 2
+            break
+    if not target_row:
+        raise ValueError(f"User '{username}' not found in sheet.")
+    delete_sheet_row(service, SPREADSHEET_ID, "Users", target_row)
+    sheets_cache.clear()
+    return True
 
 def update_user_password_in_sheet(username, new_password):
     """Updates the password for the given user in Google Sheets."""
@@ -326,6 +449,180 @@ def get_handler_email_map():
     except Exception as e:
         print(f"⚠️ Error loading handler email map: {e}")
     return email_map
+
+def get_handlers_detailed():
+    """Fetches all handlers from 'Handlers Directory' and annotates with active pending job counts."""
+    handlers = []
+    try:
+        service = get_sheets_service()
+        h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:B").execute()
+        h_rows = h_result.get('values', [])
+        
+        # Calculate active non-done jobs per handler
+        m_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:P").execute()
+        m_rows = m_result.get('values', [])
+        job_counts = {}
+        for row in m_rows:
+            while len(row) < 16:
+                row.append("")
+            allocated_handler = str(row[2]).strip().lower() if row[2] else ""
+            status_val = str(row[15]).strip().lower() if row[15] else ""
+            if allocated_handler and status_val != "done":
+                job_counts[allocated_handler] = job_counts.get(allocated_handler, 0) + 1
+        
+        for idx, r in enumerate(h_rows):
+            if r and len(r) > 0 and str(r[0]).strip():
+                name = str(r[0]).strip()
+                email = str(r[1]).strip() if len(r) > 1 and str(r[1]).strip() else f"{name.lower().replace(' ', '')}@apar.com"
+                pending_count = job_counts.get(name.lower(), 0)
+                handlers.append({
+                    "row_index": idx + 2,
+                    "name": name,
+                    "email": email,
+                    "pending_jobs": pending_count,
+                    "status": "Available" if pending_count == 0 else f"{pending_count} Active Task{'s' if pending_count > 1 else ''}"
+                })
+    except Exception as e:
+        print(f"⚠️ Error fetching detailed handlers: {e}")
+    return handlers
+
+def add_handler_to_sheet(name, email):
+    """Appends a new handler to Handlers Directory."""
+    service = get_sheets_service()
+    # Check if handler name already exists
+    h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:A").execute()
+    existing = [str(r[0]).strip().lower() for r in h_result.get('values', []) if r and str(r[0]).strip()]
+    if name.strip().lower() in existing:
+        raise ValueError(f"Handler '{name}' already exists.")
+        
+    body = {'values': [[name.strip(), email.strip()]]}
+    service.values().append(
+        spreadsheetId=SPREADSHEET_ID,
+        range="Handlers Directory!A2",
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+    sheets_cache.clear()
+    return True
+
+def update_handler_in_sheet(original_name, new_name, new_email):
+    """Updates handler details in Handlers Directory."""
+    service = get_sheets_service()
+    h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:B").execute()
+    h_rows = h_result.get('values', [])
+    target_row = None
+    for idx, r in enumerate(h_rows):
+        if r and str(r[0]).strip().lower() == original_name.strip().lower():
+            target_row = idx + 2
+            break
+    if not target_row:
+        raise ValueError(f"Handler '{original_name}' not found.")
+        
+    # If name changed, check uniqueness
+    if original_name.strip().lower() != new_name.strip().lower():
+        for r in h_rows:
+            if r and str(r[0]).strip().lower() == new_name.strip().lower():
+                raise ValueError(f"Handler name '{new_name}' is already taken.")
+                
+    body = {'values': [[new_name.strip(), new_email.strip()]]}
+    service.values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"Handlers Directory!A{target_row}:B{target_row}",
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+    sheets_cache.clear()
+    return True
+
+def delete_handler_from_sheet(name):
+    """Deletes a handler from Handlers Directory tab."""
+    service = get_sheets_service()
+    h_result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Handlers Directory!A2:A").execute()
+    h_rows = h_result.get('values', [])
+    target_row = None
+    for idx, r in enumerate(h_rows):
+        if r and str(r[0]).strip().lower() == name.strip().lower():
+            target_row = idx + 2
+            break
+    if not target_row:
+        raise ValueError(f"Handler '{name}' not found.")
+    delete_sheet_row(service, SPREADSHEET_ID, "Handlers Directory", target_row)
+    sheets_cache.clear()
+    return True
+
+def send_new_user_welcome_email(user_email, username, password):
+    """Sends account welcome credentials to newly created users."""
+    if not SMTP_USERNAME or not SMTP_PASSWORD or not user_email:
+        print("⚠️ Skipping welcome email: SMTP credentials or user email not present.")
+        return False
+    try:
+        reset_link = "https://apar-oil-sampling-monitoring-system-eight.vercel.app/login"
+        try:
+            with app.app_context():
+                serializer = get_serializer()
+                token = serializer.dumps(username, salt='password-reset-salt')
+                reset_link = url_for('reset_password', token=token, _external=True)
+        except Exception:
+            pass
+        
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "🎉 Welcome to APAR Oil Sample Monitoring System - Account Credentials"
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = user_email
+        
+        html_content = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 20px; }}
+                .container {{ max-width: 600px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+                .header {{ background-color: #111827; color: #ffffff; padding: 20px; text-align: center; }}
+                .header h2 {{ margin: 0; font-size: 1.4rem; letter-spacing: 0.5px; text-transform: uppercase; }}
+                .body {{ padding: 24px; }}
+                .credentials-box {{ background-color: #f1f5f9; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin: 20px 0; font-size: 1.05rem; }}
+                .btn-website {{ background-color: #0f172a; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 0.95rem; margin: 5px; }}
+                .footer {{ background-color: #f8fafc; padding: 15px; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #e2e8f0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>APAR Oil Sample Monitoring System</h2>
+                </div>
+                <div class="body">
+                    <p>Dear <strong>{username}</strong>,</p>
+                    <p>Your user profile has been configured for the APAR Oil Sample Monitoring System.</p>
+                    <div class="credentials-box">
+                        <strong>Username:</strong> <code style="color: #3b82f6;">{username}</code><br>
+                        <strong>Password:</strong> <code style="color: #10b981;">{password}</code>
+                    </div>
+                    <p>You can now log in to the portal to submit samples or manage lab evaluations:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="https://apar-oil-sampling-monitoring-system-eight.vercel.app/login" class="btn-website">Visit Portal Login</a>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #64748b;">If you wish to change your password, you can use the "Forgot Password" link on the login page.</p>
+                </div>
+                <div class="footer">
+                    APAR Industries &copy; 2026. All rights reserved.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, 'html'))
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+        else:
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            server.starttls()
+        server.login(SMTP_USERNAME, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, user_email, msg.as_string())
+        server.quit()
+        print(f"📧 New user welcome email sent to {user_email}")
+        return True
+    except Exception as e:
+        print(f"⚠️ Error sending welcome email to {user_email}: {e}")
+        return False
 
 def send_handler_email(handler_email, handler_name, job_details, status):
     """Sends an email warning the handler that their job is close to due."""
@@ -837,7 +1134,12 @@ def get_serializer():
 
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'static', 'forgot_password', 'reset_password']
+    allowed_endpoints = [
+        'login', 'static', 'forgot_password', 'reset_password',
+        'developer_mode', 'developer_login', 'developer_logout',
+        'dev_add_handler', 'dev_edit_handler', 'dev_delete_handler',
+        'dev_add_user', 'dev_edit_user', 'dev_delete_user'
+    ]
     if request.endpoint and request.endpoint not in allowed_endpoints and not session.get('authenticated'):
         return redirect(url_for('login'))
 
@@ -984,8 +1286,254 @@ def reset_password():
 @app.route('/logout')
 def logout():
     session.pop('authenticated', None)
+    session.pop('dev_authenticated', None)
     flash("Logged out successfully.", "success")
     return redirect(url_for('login'))
+
+def check_dev_auth():
+    return session.get('dev_authenticated') is True
+
+def wants_json_response():
+    return request.is_json or 'application/json' in request.headers.get('Accept', '') or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+@app.route('/developer', methods=['GET'])
+def developer_mode():
+    if not check_dev_auth():
+        return render_template('developer_login.html')
+    handlers = get_handlers_detailed()
+    users = get_users_detailed()
+    total_handlers = len(handlers)
+    total_users = len(users)
+    active_jobs = sum(h.get('pending_jobs', 0) for h in handlers)
+    return render_template(
+        'developer.html',
+        handlers=handlers,
+        users=users,
+        total_handlers=total_handlers,
+        total_users=total_users,
+        active_jobs=active_jobs
+    )
+
+@app.route('/developer/login', methods=['POST'])
+def developer_login():
+    data = request.get_json() if request.is_json else request.form
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+    
+    # Strictly developer credentials: username admin, password admin123
+    dev_user = os.environ.get("DEV_ADMIN_USER", "admin")
+    dev_pass = os.environ.get("DEV_ADMIN_PASSWORD", "admin123")
+    
+    if username == dev_user and password == dev_pass:
+        session['dev_authenticated'] = True
+        session['authenticated'] = True
+        session['username'] = "admin"
+        if wants_json_response():
+            return {"success": True, "redirect": url_for('developer_mode')}
+        flash("Developer Mode unlocked successfully!", "success")
+        return redirect(url_for('developer_mode'))
+    else:
+        if wants_json_response():
+            return {"success": False, "error": "Invalid Developer credentials. Access restricted to Administrator."}, 401
+        return render_template('developer_login.html', error="Invalid Developer credentials. Access restricted to Administrator.")
+
+@app.route('/developer/logout')
+def developer_logout():
+    session.pop('dev_authenticated', None)
+    flash("Exited Developer Mode.", "info")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/handlers/add', methods=['POST'])
+def dev_add_handler():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+    
+    data = request.get_json() if request.is_json else request.form
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    
+    if not name:
+        if is_api:
+            return {"success": False, "error": "Handler Name is required."}, 400
+        flash("Handler Name is required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    if not email:
+        email = f"{name.lower().replace(' ', '')}@apar.com"
+        
+    try:
+        add_handler_to_sheet(name, email)
+        if is_api:
+            return {"success": True, "message": f"Handler '{name}' added successfully!"}
+        flash(f"Handler '{name}' added successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to add handler: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/handlers/edit', methods=['POST'])
+def dev_edit_handler():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    data = request.get_json() if request.is_json else request.form
+    original_name = data.get('original_name', '').strip()
+    new_name = data.get('name', '').strip()
+    new_email = data.get('email', '').strip()
+    
+    if not original_name or not new_name:
+        if is_api:
+            return {"success": False, "error": "Handler name cannot be empty."}, 400
+        flash("Handler name cannot be empty.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    try:
+        update_handler_in_sheet(original_name, new_name, new_email)
+        if is_api:
+            return {"success": True, "message": f"Handler '{new_name}' updated successfully!"}
+        flash(f"Handler '{new_name}' updated successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to update handler: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/handlers/delete', methods=['POST'])
+def dev_delete_handler():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    data = request.get_json() if request.is_json else request.form
+    name = data.get('name', '').strip()
+    
+    if not name:
+        if is_api:
+            return {"success": False, "error": "Handler name is required."}, 400
+        flash("Handler name is required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    try:
+        delete_handler_from_sheet(name)
+        if is_api:
+            return {"success": True, "message": f"Handler '{name}' deleted successfully!"}
+        flash(f"Handler '{name}' deleted successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to delete handler: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/users/add', methods=['POST'])
+def dev_add_user():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    data = request.get_json() if request.is_json else request.form
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+    email = data.get('email', '').strip()
+    send_email = str(data.get('send_welcome_email', '')).lower() in ['true', '1', 'on', 'yes']
+    
+    if not username:
+        if is_api:
+            return {"success": False, "error": "Username is required."}, 400
+        flash("Username is required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    if not password:
+        first_name = username.split()[0].replace('.', '').lower()
+        password = f"{first_name}123"
+        
+    try:
+        add_user_to_sheet(username, password, email)
+        if send_email and email:
+            threading.Thread(target=send_new_user_welcome_email, args=(email, username, password), daemon=True).start()
+        if is_api:
+            return {"success": True, "message": f"User '{username}' created successfully!"}
+        flash(f"User '{username}' created successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to create user: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/users/edit', methods=['POST'])
+def dev_edit_user():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    data = request.get_json() if request.is_json else request.form
+    original_username = data.get('original_username', '').strip()
+    new_username = data.get('username', '').strip()
+    new_password = data.get('password', '').strip()
+    new_email = data.get('email', '').strip()
+    
+    if not original_username or not new_username:
+        if is_api:
+            return {"success": False, "error": "Username cannot be empty."}, 400
+        flash("Username cannot be empty.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    try:
+        update_user_in_sheet(original_username, new_username, new_password, new_email)
+        if is_api:
+            return {"success": True, "message": f"User '{new_username}' updated successfully!"}
+        flash(f"User '{new_username}' updated successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to update user: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/users/delete', methods=['POST'])
+def dev_delete_user():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    data = request.get_json() if request.is_json else request.form
+    username = data.get('username', '').strip()
+    
+    if not username:
+        if is_api:
+            return {"success": False, "error": "Username is required."}, 400
+        flash("Username is required.", "danger")
+        return redirect(url_for('developer_mode'))
+        
+    try:
+        delete_user_from_sheet(username)
+        if is_api:
+            return {"success": True, "message": f"User '{username}' deleted successfully!"}
+        flash(f"User '{username}' deleted successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to delete user: {e}", "danger")
+    return redirect(url_for('developer_mode'))
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5001, debug=True)

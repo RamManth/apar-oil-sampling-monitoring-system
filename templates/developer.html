@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APAR - Developer Mode Control Center</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #070b14;
+            --header-bg: #0d1424;
+            --card-bg: #111a2e;
+            --card-hover: #15223c;
+            --border-color: #1e2c47;
+            --border-highlight: #2c3f66;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-dev: #f59e0b;
+            --accent-dev-hover: #fbbf24;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --input-bg: #090e1a;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.05), transparent 450px),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05), transparent 450px),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        /* Top Navigation */
+        .dev-navbar {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .dev-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: var(--accent-dev);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            letter-spacing: 0.5px;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .pulse-dot.gold {
+            background-color: var(--accent-dev);
+            box-shadow: 0 0 8px var(--accent-dev);
+            animation: pulse-gold 2s infinite;
+        }
+        .pulse-dot.green {
+            background-color: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-gold {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* KPI Metric Cards */
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.35rem 1.5rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.1;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Tabs */
+        .dev-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .dev-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.65rem 1.4rem;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dev-tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .dev-tab-btn.active {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--accent-dev);
+        }
+
+        /* Tables & Content Cards */
+        .content-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .table-toolbar {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 280px;
+            max-width: 400px;
+        }
+
+        .search-input {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
+            border-radius: 10px;
+            padding: 0.55rem 1rem 0.55rem 2.5rem;
+            font-size: 0.85rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-dev) !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .dev-table {
+            width: 100%;
+            margin-bottom: 0;
+            color: var(--text-main);
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .dev-table th {
+            background-color: #0b111e;
+            padding: 0.9rem 1.25rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+        }
+
+        .dev-table td {
+            padding: 1rem 1.25rem;
+            font-size: 0.88rem;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(30, 44, 71, 0.6);
+            background-color: transparent;
+            transition: background-color 0.15s;
+        }
+
+        .dev-table tbody tr:hover td {
+            background-color: rgba(245, 158, 11, 0.03);
+        }
+
+        /* Avatar initial */
+        .avatar-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3));
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: var(--accent-dev);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+
+        .avatar-circle.user-avatar {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3));
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+        }
+
+        /* Badges */
+        .badge-admin {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: var(--accent-dev);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-user {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .badge-available {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
+        }
+
+        .badge-busy {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
+        }
+
+        /* Password reveal */
+        .password-box {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+        }
+
+        .btn-eye {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+        .btn-eye:hover {
+            color: var(--text-main);
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-action.edit:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+        }
+
+        .btn-action.delete:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        .btn-action:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-add-primary {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            color: #0b0f19;
+            font-weight: 700;
+            padding: 0.55rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
+        }
+
+        .btn-add-primary:hover {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000000;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+        }
+
+        /* Modals */
+        .modal-content {
+            background-color: #0d1424;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            color: var(--text-main);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.4rem;
+        }
+
+        .modal .form-control {
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
+            border-radius: 8px;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.9rem;
+        }
+
+        .modal .form-control:focus {
+            border-color: var(--accent-dev) !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1055;
+        }
+
+        .custom-toast {
+            background: #111a2e;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 18px;
+            color: var(--text-main);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Sticky Navbar -->
+    <nav class="dev-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Logo" height="36">
+            <div class="d-flex align-items-center gap-2">
+                <span class="dev-badge">
+                    <span class="pulse-dot gold"></span> Developer Mode
+                </span>
+                <span class="status-pill d-none d-md-inline-flex">
+                    <span class="pulse-dot green"></span> Google Sheets Synced
+                </span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/?login=true" class="btn btn-sm btn-outline-secondary text-white border-secondary fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.82rem; padding: 0.45rem 1rem; border-radius: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                    <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                </svg>
+                Operations Portal
+            </a>
+            <a href="/developer/logout" class="btn btn-sm btn-outline-danger fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.82rem; padding: 0.45rem 1rem; border-radius: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
+                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                </svg>
+                Exit Dev Mode
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid px-4 py-4" style="max-width: 1400px;">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show border-0" role="alert" style="background: rgba({{ '16, 185, 129' if category == 'success' else ('239, 68, 68' if category == 'danger' else '59, 130, 246') }}, 0.15); color: {{ '#34d399' if category == 'success' else ('#f87171' if category == 'danger' else '#93c5fd') }}; border-radius: 12px;">
+                            {{ message }}
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- KPI Metrics Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Registered Handlers</div>
+                    <div class="metric-value" style="color: var(--accent-dev);" id="metric-handlers-count">{{ total_handlers }}</div>
+                    <div class="text-muted small mt-1">Laboratory Staff</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Portal Users</div>
+                    <div class="metric-value" style="color: #60a5fa;" id="metric-users-count">{{ total_users }}</div>
+                    <div class="text-muted small mt-1">Field & Lab Accounts</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Active Workloads</div>
+                    <div class="metric-value" style="color: #34d399;">{{ active_jobs }}</div>
+                    <div class="text-muted small mt-1">Pending Evaluations</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Admin Privilege</div>
+                    <div class="metric-value" style="font-size: 1.5rem; color: #fbbf24;">MASTER</div>
+                    <div class="text-muted small mt-1">User: <code>admin</code></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Selection Navigation -->
+        <div class="dev-tabs">
+            <button type="button" class="dev-tab-btn active" id="btn-tab-handlers" onclick="switchDevTab('handlers')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-badge" viewBox="0 0 16 16">
+                    <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                    <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
+                </svg>
+                Technical Handlers Directory
+                <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ handlers|length }}</span>
+            </button>
+            <button type="button" class="dev-tab-btn" id="btn-tab-users" onclick="switchDevTab('users')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
+                    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.022.004zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/>
+                </svg>
+                Portal Login Users
+                <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ users|length }}</span>
+            </button>
+        </div>
+
+        <!-- SECTION 1: Handlers Directory Tab -->
+        <div id="section-handlers">
+            <div class="content-card">
+                <div class="table-toolbar">
+                    <div class="search-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-search search-icon" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                        <input type="text" id="search-handlers-input" class="search-input" placeholder="Search handler by name or email..." oninput="filterHandlers()">
+                    </div>
+                    <div>
+                        <button type="button" class="btn-add-primary" data-bs-toggle="modal" data-bs-target="#addHandlerModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                            </svg>
+                            Add New Handler
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="dev-table" id="handlers-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">#</th>
+                                <th>Technical Handler</th>
+                                <th>Contact Email</th>
+                                <th>Workload Status</th>
+                                <th style="width: 140px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in handlers %}
+                            <tr class="handler-row" data-name="{{ h.name|lower }}" data-email="{{ h.email|lower }}">
+                                <td class="text-muted font-monospace">{{ loop.index }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle">
+                                            {{ h.name[:1]|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ h.name }}</div>
+                                            <div class="text-muted small">Row {{ h.row_index }} in Sheet</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-monospace text-light">{{ h.email }}</span>
+                                </td>
+                                <td>
+                                    {% if h.pending_jobs == 0 %}
+                                        <span class="badge-available">Available (0 Active)</span>
+                                    {% else %}
+                                        <span class="badge-busy">{{ h.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <button type="button" class="btn-action edit" onclick="openEditHandlerModal('{{ h.name|escape }}', '{{ h.email|escape }}')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="btn-action delete" onclick="openDeleteHandlerModal('{{ h.name|escape }}')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                                                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">No handlers configured yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: Portal Login Users Tab -->
+        <div id="section-users" style="display: none;">
+            <div class="content-card">
+                <div class="table-toolbar">
+                    <div class="search-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-search search-icon" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                        <input type="text" id="search-users-input" class="search-input" placeholder="Search user by username or email..." oninput="filterUsers()">
+                    </div>
+                    <div>
+                        <button type="button" class="btn-add-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus-fill" viewBox="0 0 16 16">
+                                <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
+                            </svg>
+                            Add New User
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="dev-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">#</th>
+                                <th>User Profile</th>
+                                <th>Email Address</th>
+                                <th>Password</th>
+                                <th>Role</th>
+                                <th style="width: 140px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr class="user-row" data-username="{{ u.username|lower }}" data-email="{{ u.email|lower }}">
+                                <td class="text-muted font-monospace">{{ loop.index }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle user-avatar">
+                                            {{ u.username[:1]|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold d-flex align-items-center gap-2">
+                                                {{ u.username }}
+                                                {% if u.is_admin %}
+                                                    <span class="badge-admin">Admin</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-muted small">Row {{ u.row_index }} in Sheet</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-monospace text-light">{{ u.email if u.email else '—' }}</span>
+                                </td>
+                                <td>
+                                    <div class="password-box">
+                                        <span class="password-text font-monospace" data-password="{{ u.password }}">••••••••</span>
+                                        <button type="button" class="btn-eye" onclick="togglePasswordVisibility(this)" title="Show/Hide Password">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if u.is_admin %}
+                                        <span class="badge-admin">System Admin</span>
+                                    {% else %}
+                                        <span class="badge-user">Staff User</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <button type="button" class="btn-action edit" onclick="openEditUserModal('{{ u.username|escape }}', '{{ u.password|escape }}', '{{ u.email|escape }}')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                                            </svg>
+                                        </button>
+                                        {% if u.is_admin %}
+                                        <button type="button" class="btn-action" disabled title="The master admin user cannot be deleted.">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
+                                                <path d="M8 1a2 2 0 0 0-2 2v4H5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V3a2 2 0 0 0-2-2m-1 2a1 1 0 0 1 2 0v4H7z"/>
+                                            </svg>
+                                        </button>
+                                        {% else %}
+                                        <button type="button" class="btn-action delete" onclick="openDeleteUserModal('{{ u.username|escape }}')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                                                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                                            </svg>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No users found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL 1: Add Handler -->
+    <div class="modal fade" id="addHandlerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span style="color: var(--accent-dev);">👨‍🔬</span> Add New Technical Handler
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-add-handler" method="POST" action="/developer/handlers/add">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="new_handler_name" class="form-label">Handler Full Name</label>
+                            <input type="text" class="form-control" id="new_handler_name" name="name" placeholder="e.g. Ramesh Kumar" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_handler_email" class="form-label">Contact Email Address</label>
+                            <input type="email" class="form-control" id="new_handler_email" name="email" placeholder="e.g. ramesh.kumar@apar.com" required>
+                            <div class="form-text text-muted small">Notifications for assigned oil test jobs will be sent to this email.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-add-primary">Add Handler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Edit Handler -->
+    <div class="modal fade" id="editHandlerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span style="color: var(--accent-dev);">✏️</span> Edit Handler Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-edit-handler" method="POST" action="/developer/handlers/edit">
+                    <input type="hidden" id="edit_handler_original_name" name="original_name">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_handler_name" class="form-label">Handler Full Name</label>
+                            <input type="text" class="form-control" id="edit_handler_name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_handler_email" class="form-label">Contact Email Address</label>
+                            <input type="email" class="form-control" id="edit_handler_email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-add-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Delete Handler Confirmation -->
+    <div class="modal fade" id="deleteHandlerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header border-danger">
+                    <h5 class="modal-title text-danger">
+                        <span>⚠️</span> Confirm Handler Removal
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-delete-handler" method="POST" action="/developer/handlers/delete">
+                    <input type="hidden" id="delete_handler_name" name="name">
+                    <div class="modal-body">
+                        <p>Are you sure you want to remove handler <strong id="delete_handler_display_name" class="text-white"></strong> from the system?</p>
+                        <p class="text-muted small mb-0">This handler will no longer appear in the sample allocation dropdown for future jobs.</p>
+                    </div>
+                    <div class="modal-footer border-danger">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete Handler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Add User -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span style="color: #60a5fa;">👥</span> Add New Portal Login User
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-add-user" method="POST" action="/developer/users/add">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="new_username" class="form-label">Username / Full Name</label>
+                            <input type="text" class="form-control" id="new_username" name="username" placeholder="e.g. Rajesh Sharma" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_user_email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="new_user_email" name="email" placeholder="e.g. rajesh.sharma@apar.com">
+                            <div class="form-text text-muted small">Required for password recovery and welcome notifications.</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="new_user_password" class="form-label mb-0">Initial Password</label>
+                                <button type="button" class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.75rem;" onclick="generateRandomPassword()">
+                                    ⚡ Generate
+                                </button>
+                            </div>
+                            <input type="text" class="form-control font-monospace" id="new_user_password" name="password" placeholder="Leave blank to auto-generate from name">
+                        </div>
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="send_welcome_email" name="send_welcome_email" checked>
+                            <label class="form-check-label text-muted small" for="send_welcome_email">
+                                Send welcome email with login credentials directly to user
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: var(--accent-blue); border-color: var(--accent-blue);">Create User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Edit User -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span style="color: #60a5fa;">✏️</span> Edit User Account
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-edit-user" method="POST" action="/developer/users/edit">
+                    <input type="hidden" id="edit_user_original_username" name="original_username">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="edit_username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_user_email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="edit_user_email" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_user_password" class="form-label">Account Password</label>
+                            <input type="text" class="form-control font-monospace" id="edit_user_password" name="password" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: var(--accent-blue); border-color: var(--accent-blue);">Update User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: Delete User Confirmation -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header border-danger">
+                    <h5 class="modal-title text-danger">
+                        <span>⚠️</span> Confirm User Deletion
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-delete-user" method="POST" action="/developer/users/delete">
+                    <input type="hidden" id="delete_username" name="username">
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete login user account for <strong id="delete_username_display" class="text-white"></strong>?</p>
+                        <p class="text-muted small mb-0">This user will immediately lose access to the APAR Sample Monitoring System.</p>
+                    </div>
+                    <div class="modal-footer border-danger">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Tab switching logic
+        function switchDevTab(tab) {
+            const btnHandlers = document.getElementById('btn-tab-handlers');
+            const btnUsers = document.getElementById('btn-tab-users');
+            const secHandlers = document.getElementById('section-handlers');
+            const secUsers = document.getElementById('section-users');
+
+            if (tab === 'handlers') {
+                btnHandlers.classList.add('active');
+                btnUsers.classList.remove('active');
+                secHandlers.style.display = 'block';
+                secUsers.style.display = 'none';
+                window.location.hash = 'handlers';
+            } else {
+                btnUsers.classList.add('active');
+                btnHandlers.classList.remove('active');
+                secHandlers.style.display = 'none';
+                secUsers.style.display = 'block';
+                window.location.hash = 'users';
+            }
+        }
+
+        // Initialize active tab from hash and ensure session is preserved for operations portal
+        document.addEventListener('DOMContentLoaded', () => {
+            sessionStorage.setItem('tab_authenticated', 'true');
+            if (window.location.hash === '#users') {
+                switchDevTab('users');
+            }
+        });
+
+        // Search Filter for Handlers
+        function filterHandlers() {
+            const query = document.getElementById('search-handlers-input').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('.handler-row');
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name') || '';
+                const email = row.getAttribute('data-email') || '';
+                if (name.includes(query) || email.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Search Filter for Users
+        function filterUsers() {
+            const query = document.getElementById('search-users-input').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('.user-row');
+            rows.forEach(row => {
+                const username = row.getAttribute('data-username') || '';
+                const email = row.getAttribute('data-email') || '';
+                if (username.includes(query) || email.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Password visibility toggler
+        function togglePasswordVisibility(btn) {
+            const box = btn.closest('.password-box');
+            const textSpan = box.querySelector('.password-text');
+            const actualPassword = textSpan.getAttribute('data-password');
+            if (textSpan.innerText === '••••••••') {
+                textSpan.innerText = actualPassword;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16">
+                    <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z"/>
+                    <path d="M11.297 9.174a3 3 0 0 0-4.07-4.07l.88.88A2 2 0 0 1 8.5 7.5a2 2 0 0 1-.326.88z"/>
+                    <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 3.171-12-12 .708-.708 12 12z"/>
+                </svg>`;
+            } else {
+                textSpan.innerText = '••••••••';
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                </svg>`;
+            }
+        }
+
+        // Open Modals with prefilled data
+        function openEditHandlerModal(name, email) {
+            document.getElementById('edit_handler_original_name').value = name;
+            document.getElementById('edit_handler_name').value = name;
+            document.getElementById('edit_handler_email').value = email;
+            new bootstrap.Modal(document.getElementById('editHandlerModal')).show();
+        }
+
+        function openDeleteHandlerModal(name) {
+            document.getElementById('delete_handler_name').value = name;
+            document.getElementById('delete_handler_display_name').innerText = name;
+            new bootstrap.Modal(document.getElementById('deleteHandlerModal')).show();
+        }
+
+        function openEditUserModal(username, password, email) {
+            document.getElementById('edit_user_original_username').value = username;
+            document.getElementById('edit_username').value = username;
+            document.getElementById('edit_user_password').value = password;
+            document.getElementById('edit_user_email').value = email;
+            new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        }
+
+        function openDeleteUserModal(username) {
+            document.getElementById('delete_username').value = username;
+            document.getElementById('delete_username_display').innerText = username;
+            new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
+        }
+
+        function generateRandomPassword() {
+            const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#';
+            let pwd = '';
+            for (let i = 0; i < 10; i++) {
+                pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('new_user_password').value = pwd;
+        }
+
+        // Handle AJAX form submissions for ultra-smooth responsiveness
+        function bindAjaxForm(formId, modalId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing...`;
+
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modalEl = document.getElementById(modalId);
+                        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                        if (modalInstance) modalInstance.hide();
+                        
+                        // Show success and reload page to reflect Google Sheets update
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Operation failed');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(err => {
+                    // Fallback to standard form submit if JSON fetch fails
+                    form.submit();
+                });
+            });
+        }
+
+        bindAjaxForm('form-add-handler', 'addHandlerModal');
+        bindAjaxForm('form-edit-handler', 'editHandlerModal');
+        bindAjaxForm('form-delete-handler', 'deleteHandlerModal');
+        bindAjaxForm('form-add-user', 'addUserModal');
+        bindAjaxForm('form-edit-user', 'editUserModal');
+        bindAjaxForm('form-delete-user', 'deleteUserModal');
+    </script>
+</body>
+</html>

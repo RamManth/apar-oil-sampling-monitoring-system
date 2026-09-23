@@ -19,3 +19,6 @@ credentials.json
 
 .vercel
 .env*
+
+# Browser saved web page dumps
+APAR - Oil Sample Monitoring System*_files/
