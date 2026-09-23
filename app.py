@@ -1297,6 +1297,7 @@ def wants_json_response():
     return request.is_json or 'application/json' in request.headers.get('Accept', '') or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 @app.route('/developer', methods=['GET'])
+@app.route('/developer/', methods=['GET'])
 def developer_mode():
     if not check_dev_auth():
         return render_template('developer_login.html')
@@ -1534,6 +1535,11 @@ def dev_delete_user():
             return {"success": False, "error": str(e)}, 500
         flash(f"Failed to delete user: {e}", "danger")
     return redirect(url_for('developer_mode'))
+
+@app.errorhandler(404)
+def handle_404(e):
+    print(f"[FLASK 404] path={request.path}, method={request.method}, url={request.url}, environ_path={request.environ.get('PATH_INFO')}")
+    return f"404 Not Found on server for: {request.path}", 404
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5001, debug=True)
