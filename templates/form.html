@@ -24,33 +24,32 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* General page background (modern dark slate dashboard look) */
-            --bg-main: #090e1a;
-            --header-bg: #111827;
-            --border-color: #1f2937;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
+            --bg-main: #070b14;
+            --header-bg: #0d1424;
+            --card-bg: #111a2e;
+            --card-hover: #15223c;
+            --border-color: #1e2c47;
+            --border-highlight: #2c3f66;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-dev: #f59e0b;
+            --accent-dev-hover: #fbbf24;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #60a5fa;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --input-bg: #090e1a;
             
-            /* Light theme variables for the input area card */
-            --form-bg: #ffffff;
-            --form-text: #0f172a;
-            --form-text-muted: #64748b;
-            --form-border: #e2e8f0;
-            --form-input-bg: #f8fafc;
-            --form-input-border: #cbd5e1;
-            
-            /* Notification badges & urgency status colors */
-            --danger-bg: rgba(239, 68, 68, 0.1);
-            --danger-border: rgba(239, 68, 68, 0.2);
-            --danger-text: #ef4444;
-            --success-bg: rgba(16, 185, 129, 0.1);
-            --success-border: rgba(16, 185, 129, 0.2);
-            --success-text: #10b981;
+            /* Status badges & notification tokens */
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --danger-border: rgba(239, 68, 68, 0.35);
+            --danger-text: #f87171;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --success-border: rgba(16, 185, 129, 0.3);
+            --success-text: #34d399;
         }
 
         body {
@@ -60,130 +59,468 @@
             min-height: 100vh;
             margin: 0;
             overflow-x: hidden;
-            background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.06), transparent 500px),
-                              radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.04), transparent 500px);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.04), transparent 450px),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05), transparent 450px),
+                linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
         }
 
-        .form-card {
-            background-color: var(--form-bg);
-            border: 1px solid var(--form-border);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-            color: var(--form-text);
-        }
-
-        .brand-header {
+        /* Top Navigation */
+        .dev-navbar {
             background-color: var(--header-bg);
-            padding: 1.25rem 2rem;
             border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
 
-        .brand-header h4 {
+        .portal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
             font-weight: 700;
-            font-size: 1.2rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
             letter-spacing: 0.5px;
-            margin: 0;
         }
 
-        /* Form styling */
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .pulse-dot.gold {
+            background-color: var(--accent-dev);
+            box-shadow: 0 0 8px var(--accent-dev);
+            animation: pulse-gold 2s infinite;
+        }
+        .pulse-dot.green {
+            background-color: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse-green 2s infinite;
+        }
+        .pulse-dot.red {
+            background-color: var(--accent-red);
+            box-shadow: 0 0 8px var(--accent-red);
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-gold {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Navigation Tabs */
+        .dev-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+
+        .dev-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.65rem 1.35rem;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .dev-tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .dev-tab-btn.active {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
+        }
+
+        /* Content Cards */
+        .content-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Form section styling */
         .form-section-header {
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             font-weight: 700;
-            color: var(--accent);
+            color: #60a5fa;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-top: 1.75rem;
+            margin-top: 1.5rem;
             margin-bottom: 1.25rem;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
         .form-section-number {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: var(--accent);
+            background-color: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
             width: 24px;
             height: 24px;
-            border-radius: 50%;
+            border-radius: 6px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-size: 0.75rem;
             font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .form-label {
             font-weight: 600;
-            font-size: 0.78rem;
-            color: var(--form-text-muted);
-            margin-bottom: 0.4rem;
-            letter-spacing: 0.3px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.45rem;
         }
 
         .required-dot {
-            color: #ef4444;
+            color: var(--accent-red);
             margin-left: 2px;
+            font-weight: bold;
         }
 
+        /* Inputs & Selects */
         .form-control, .form-select {
-            background-color: var(--form-input-bg) !important;
-            border: 1px solid var(--form-input-border) !important;
-            color: var(--form-text) !important;
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
             border-radius: 10px;
-            padding: 0.7rem 0.9rem;
-            font-size: 0.9rem;
+            padding: 0.65rem 0.95rem;
+            font-size: 0.88rem;
             width: 100%;
             transition: all 0.2s ease;
+            color-scheme: dark;
+        }
+
+        .form-control::placeholder {
+            color: #475569;
         }
 
         .form-control:focus, .form-select:focus {
-            background-color: #ffffff !important;
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+            background-color: #0b1222 !important;
+            border-color: var(--accent-blue) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
             outline: none;
+            color: #ffffff !important;
         }
 
         .form-select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-            background-position: right 0.75rem center !important;
-            background-size: 16px 12px !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-position: right 0.85rem center !important;
+            background-size: 14px 10px !important;
             background-repeat: no-repeat !important;
         }
 
-        .btn-submit {
-            background-color: var(--accent);
-            border: 1px solid var(--accent);
-            color: #ffffff;
-            font-weight: 600;
-            padding: 0.75rem 2.25rem;
-            border-radius: 10px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .form-select option {
+            background-color: #0d1424;
+            color: #f8fafc;
         }
 
-        .btn-submit:hover {
-            background-color: var(--accent-hover);
-            border-color: var(--accent-hover);
+        /* Buttons */
+        .btn-submit-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-
-        .btn-refresh {
-            background-color: transparent;
-            border: 1px solid var(--form-input-border);
-            color: var(--form-text);
-            font-weight: 600;
+            font-weight: 700;
             padding: 0.75rem 2.25rem;
             border-radius: 10px;
+            font-size: 0.88rem;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit-primary:hover {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-refresh-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .btn-refresh:hover {
-            background-color: #f1f5f9;
-            border-color: #cbd5e1;
+        .btn-refresh-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-highlight);
+            color: var(--text-main);
+        }
+
+        /* Presets quick tags */
+        .config-tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(30, 44, 71, 0.7);
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .config-tag-pill:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        /* KPI Metric Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.35rem 1.5rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .metric-card.accent-blue::before {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        }
+        .metric-card.accent-amber::before {
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+        }
+        .metric-card.accent-green::before {
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+        }
+        .metric-card.accent-red::before {
+            background: linear-gradient(90deg, transparent, #ef4444, transparent);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.1;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Dev Table */
+        .table-toolbar {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: #0b111e;
+        }
+
+        .dev-table {
+            width: 100%;
+            margin-bottom: 0;
+            color: var(--text-main);
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .dev-table th {
+            background-color: #0b111e;
+            padding: 0.9rem 1.15rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .dev-table td {
+            padding: 0.95rem 1.15rem;
+            font-size: 0.86rem;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(30, 44, 71, 0.6);
+            background-color: transparent;
+            transition: background-color 0.15s;
+            white-space: nowrap;
+        }
+
+        .dev-table tbody tr:hover td {
+            background-color: rgba(59, 130, 246, 0.04);
+        }
+
+        /* Action Buttons in Ledger */
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 5px 11px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .btn-action.btn-status-pending {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: #34d399;
+        }
+        .btn-action.btn-status-pending:hover {
+            background: rgba(16, 185, 129, 0.22);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+        }
+
+        .btn-action.btn-status-done {
+            background: rgba(148, 163, 184, 0.08);
+            border-color: rgba(148, 163, 184, 0.25);
+            color: #94a3b8;
+        }
+        .btn-action.btn-status-done:hover {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.4);
+            color: #f1f5f9;
+        }
+
+        .btn-action.btn-email {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+        }
+        .btn-action.btn-email:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+        }
+
+        /* Status Badges */
+        .status-badge-pending {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.5px;
+        }
+        .status-badge-done {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.5px;
         }
 
         /* Redefined Notification Drawer */
@@ -191,16 +528,16 @@
             position: fixed;
             top: 0;
             right: -420px;
-            width: 400px;
+            width: 410px;
             height: 100vh;
-            background-color: #0f172a;
-            border-left: 1px solid #1e293b;
-            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            background-color: var(--header-bg);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -15px 0 40px rgba(0, 0, 0, 0.7);
             z-index: 1050;
             transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            color: #f8fafc;
+            color: var(--text-main);
         }
 
         .notification-drawer.open {
@@ -208,8 +545,8 @@
         }
 
         .notification-drawer-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #1e293b;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -223,8 +560,8 @@
 
         .notification-drawer-footer {
             padding: 1.25rem;
-            border-top: 1px solid #1e293b;
-            background-color: #090d16;
+            border-top: 1px solid var(--border-color);
+            background-color: #090e1a;
         }
 
         .notification-bell-pulse {
@@ -251,11 +588,12 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.7);
             z-index: 1040;
             display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
+            backdrop-filter: blur(2px);
         }
 
         .drawer-backdrop.show {
@@ -264,326 +602,107 @@
 
         .status-badge {
             font-size: 0.68rem;
-            padding: 0.25rem 0.5rem;
+            padding: 0.25rem 0.55rem;
             border-radius: 6px;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .badge-today {
-            background-color: rgba(239, 68, 68, 0.2);
+            background-color: rgba(239, 68, 68, 0.15);
             color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(239, 68, 68, 0.35);
         }
 
         .badge-1day {
-            background-color: rgba(249, 115, 22, 0.2);
+            background-color: rgba(249, 115, 22, 0.15);
             color: #fed7aa;
-            border: 1px solid rgba(249, 115, 22, 0.3);
+            border: 1px solid rgba(249, 115, 22, 0.35);
         }
 
         .badge-2day {
-            background-color: rgba(234, 179, 8, 0.2);
+            background-color: rgba(234, 179, 8, 0.15);
             color: #fef08a;
-            border: 1px solid rgba(234, 179, 8, 0.3);
+            border: 1px solid rgba(234, 179, 8, 0.35);
         }
 
         /* Floating Toasts */
         #toast-container {
             position: fixed;
-            top: 24px;
+            bottom: 24px;
             right: 24px;
             z-index: 1100;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            max-width: 350px;
+            gap: 10px;
+            max-width: 380px;
             width: 100%;
         }
 
         .custom-toast {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #fafafa;
-            padding: 1rem 1.25rem;
+            background: #111a2e;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 18px;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 12px;
-            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             transition: all 0.3s ease;
         }
 
         .custom-toast.hide {
             opacity: 0;
-            transform: translateY(-20px) scale(0.9);
+            transform: translateY(20px) scale(0.95);
         }
 
         .custom-toast-success {
-            border-left: 4px solid #10b981;
+            border-left: 4px solid var(--accent-green);
         }
-
         .custom-toast-danger {
-            border-left: 4px solid #ef4444;
+            border-left: 4px solid var(--accent-red);
         }
-
         .custom-toast-info {
-            border-left: 4px solid #3b82f6;
+            border-left: 4px solid var(--accent-blue);
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        /* View selector tabs */
-        .view-selector-tabs {
-            border-bottom: 1px solid #cbd5e1;
-            display: flex;
-            width: 100%;
-            background-color: #f8fafc;
-        }
-        .view-tab-btn {
-            flex: 1;
-            background-color: transparent;
-            color: #475569;
-            border: none;
-            border-bottom: 4px solid transparent !important;
-            outline: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.95rem !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            padding: 1.1rem 1rem !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .view-tab-btn:hover {
-            color: var(--accent);
-            background-color: #f1f5f9;
-        }
-        .view-tab-btn.active {
-            color: var(--accent);
-            background-color: #ffffff;
-            border-bottom: 4px solid var(--accent) !important;
+        /* Modals */
+        .modal-content {
+            background-color: #0d1424;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            color: var(--text-main);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
         }
 
-        /* Status badges and buttons in dashboard */
-        .status-badge-pending {
-            background-color: #fef3c7;
-            color: #d97706;
-            border: 1px solid #fde68a;
-        }
-        .status-badge-done {
-            background-color: #d1fae5;
-            color: #059669;
-            border: 1px solid #a7f3d0;
-        }
-        .btn-status-pending {
-            background-color: #10b981;
-            color: #ffffff;
-            border: 1px solid #10b981;
-        }
-        .btn-status-pending:hover {
-            background-color: #059669;
-            border-color: #059669;
-            color: #ffffff;
-            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
-        }
-        .btn-status-done {
-            background-color: transparent;
-            color: #64748b;
-            border: 1px solid #cbd5e1;
-        }
-        .btn-status-done:hover {
-            background-color: #f1f5f9;
-            color: #334155;
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
         }
 
-        /* Responsive Table Container Wrapper to allow border radius + horizontal scroll */
-        .table-container-wrapper {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-            background-color: #ffffff;
-        }
-        
-        .table-responsive-scroll {
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
         }
 
-        .table thead th {
-            font-weight: 700 !important;
-            font-size: 0.78rem !important;
-            text-transform: uppercase !important;
-            color: #64748b !important;
-            padding: 0.85rem 1rem !important;
-            vertical-align: middle !important;
-            white-space: nowrap !important;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #e2e8f0;
+        .modal .form-control, .modal .form-select {
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
         }
 
-        .table tbody td {
-            font-size: 0.85rem !important;
-            color: #334155 !important;
-            padding: 0.85rem 1rem !important;
-            vertical-align: middle !important;
-            white-space: nowrap !important;
-        }
-        
-        /* Non-wrapping action button container */
-        .action-btn-container {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: nowrap;
-        }
-        
-        .action-btn-container .btn {
-            white-space: nowrap !important;
-            font-size: 0.72rem !important;
-            font-weight: 600 !important;
-            border-radius: 6px !important;
-            padding: 0.35rem 0.75rem !important;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-
-        /* Metrics dashboard cards styling */
-        .metrics-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .metric-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 18px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-        }
-
-        .metric-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .metric-details h3 {
-            margin: 0;
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .metric-details p {
-            margin: 0;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #64748b;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-blue { border-left: 4px solid #3b82f6; }
-        .metric-blue .metric-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-        
-        .metric-amber { border-left: 4px solid #f59e0b; }
-        .metric-amber .metric-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-
-        .metric-emerald { border-left: 4px solid #10b981; }
-        .metric-emerald .metric-icon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-
-        .metric-rose { border-left: 4px solid #f43f5e; }
-        .metric-rose .metric-icon { background: rgba(244, 63, 94, 0.1); color: #f43f5e; }
-
-        /* Search and filter controls bar */
-        .filter-bar {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex: 1;
-            min-width: 180px;
-        }
-
-        .filter-group label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #64748b;
-            letter-spacing: 0.5px;
-        }
-
-        .filter-input, .filter-select {
-            background-color: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 8px !important;
-            padding: 0.5rem 0.75rem !important;
-            font-size: 0.85rem !important;
-            color: #1e293b !important;
-        }
-
-        /* Chart card styling */
-        .chart-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 24px;
-        }
-
-        .chart-header {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #0f172a;
-            letter-spacing: 0.5px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .modal .form-control:focus, .modal .form-select:focus {
+            border-color: var(--accent-blue) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
         }
     </style>
 </head>
@@ -597,7 +716,7 @@
     <!-- Redefined Notification Drawer -->
     <div id="notificationDrawer" class="notification-drawer">
         <div class="notification-drawer-header">
-            <h5 class="m-0 text-uppercase fw-bold d-flex align-items-center gap-2" style="font-size: 1rem; letter-spacing: 0.5px;">
+            <h5 class="m-0 text-uppercase fw-bold d-flex align-items-center gap-2" style="font-size: 0.95rem; letter-spacing: 0.5px;">
                 <span>🚨</span> Active Timeline Monitor
             </h5>
             <button type="button" class="btn-close btn-close-white" onclick="closeDrawer()" aria-label="Close"></button>
@@ -609,20 +728,20 @@
                 </div>
                 <div class="d-flex flex-column gap-3">
                     {% for alarm in active_alarms %}
-                        <div class="p-3 rounded-3" style="background-color: #1e293b; border: 1px solid #334155;">
+                        <div class="p-3 rounded-3" style="background-color: #111a2e; border: 1px solid var(--border-color);">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="status-badge {% if 'TODAY' in alarm.status %}badge-today{% elif '1 Day' in alarm.status %}badge-1day{% else %}badge-2day{% endif %}">
                                     {{ alarm.status }}
                                 </span>
-                                <span class="text-secondary" style="font-size: 0.75rem; font-weight: 600;">ID #{{ alarm.id }}</span>
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 600; color: #60a5fa;">#{{ alarm.id }}</span>
                             </div>
                             <div class="mb-3" style="font-size: 0.85rem; line-height: 1.5; color: #cbd5e1;">
                                 <div>Executive: <strong class="text-white">{{ alarm.executive }}</strong></div>
                                 <div>Customer: <strong class="text-white">{{ alarm.customer }}</strong></div>
-                                <div class="mt-1 text-info" style="font-size: 0.8rem;">Target Date: <strong>{{ alarm.deadline }}</strong></div>
+                                <div class="mt-1" style="font-size: 0.8rem; color: #60a5fa;">Target Date: <strong style="font-family: 'JetBrains Mono', monospace;">{{ alarm.deadline }}</strong></div>
                             </div>
                             <form method="POST" action="/mark_done/{{ alarm.id }}" class="m-0">
-                                <button type="submit" class="btn btn-sm btn-success w-100 text-uppercase fw-bold py-1.5" style="font-size: 0.75rem; border-radius: 6px;">Job Done ✓</button>
+                                <button type="submit" class="btn btn-sm btn-success w-100 text-uppercase fw-bold py-1.5" style="font-size: 0.75rem; border-radius: 8px; background-color: #10b981; border-color: #10b981;">Job Done ✓</button>
                             </form>
                         </div>
                     {% endfor %}
@@ -637,418 +756,462 @@
         </div>
         <div class="notification-drawer-footer">
             {% if active_alarms %}
-                <button class="btn btn-warning w-100 text-dark fw-bold text-uppercase py-2" style="font-size: 0.8rem; border-radius: 8px; letter-spacing: 0.5px;" onclick="snoozeAlarm()">
+                <button class="btn btn-warning w-100 text-dark fw-bold text-uppercase py-2" style="font-size: 0.8rem; border-radius: 8px; letter-spacing: 0.5px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none;" onclick="snoozeAlarm()">
                     Snooze Alarm (5 Min)
                 </button>
             {% else %}
-                <button class="btn btn-outline-secondary w-100 disabled" style="font-size: 0.8rem; border-radius: 8px;">
+                <button class="btn btn-outline-secondary w-100 disabled" style="font-size: 0.8rem; border-radius: 8px; border-color: var(--border-color); color: var(--text-muted);">
                     Alarm System Dormant
                 </button>
             {% endif %}
         </div>
     </div>
 
+    <!-- Top Sticky Modern Navbar (Matching Developer Mode) -->
+    <nav class="dev-navbar d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Logo" style="height: 32px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+            <div style="width: 1px; height: 26px; background-color: var(--border-color);"></div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="portal-badge">OPERATIONS PORTAL</span>
+                <span class="status-pill"><span class="pulse-dot green"></span> Live System</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <!-- Bell Button with badge -->
+            <button id="notification-bell-btn" class="btn btn-link position-relative p-2 text-white border-0 {% if active_alarms %}notification-bell-pulse{% endif %}" style="text-decoration: none; outline: none; transition: transform 0.2s; background: rgba(255,255,255,0.05); border-radius: 10px;" onclick="toggleDrawer()" title="View Timeline Alerts">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bell-fill" viewBox="0 0 16 16">
+                    <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/>
+                </svg>
+                {% if active_alarms %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; padding: 0.25em 0.55em; font-family: 'JetBrains Mono', monospace;">
+                    {{ active_alarms|length }}
+                </span>
+                {% endif %}
+            </button>
+            <!-- Developer Options Quick Link -->
+            <a href="/developer" class="btn btn-sm fw-semibold text-uppercase px-3 py-1.5 d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem; border-radius: 8px; letter-spacing: 0.5px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; transition: all 0.2s;" title="Open Developer Options">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-shield-lock-fill" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.464 9.99a11.8 11.8 0 0 0 2.946 2.659c.638.411 1.272.71 1.449.774a1.7 1.7 0 0 0 1.96 0c.177-.064.811-.363 1.449-.774a11.8 11.8 0 0 0 2.946-2.659c1.677-2.195 3.06-5.513 2.464-9.99a1.54 1.54 0 0 0-1.044-1.263 63 63 0 0 0-2.887-.87C9.843.266 8.69 0 8 0m0 5a1.5 1.5 0 0 1 .5 2.915l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595l.384-1.99A1.5 1.5 0 0 1 8 5"/>
+                </svg>
+                <span>Dev Mode</span>
+            </a>
+            <a href="/logout" class="btn btn-sm fw-semibold text-uppercase px-3 py-1.5" style="font-size: 0.78rem; border-radius: 8px; letter-spacing: 0.5px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); transition: all 0.2s;">Logout</a>
+        </div>
+    </nav>
+
     <!-- Main Container -->
-    <div class="container-fluid my-4 px-3 px-md-5" style="max-width: 1500px;">
-        <div class="card form-card">
-            <!-- Brand Header -->
-            <div class="brand-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Logo" style="height: 32px; width: auto;">
-                    <div style="width: 2px; height: 24px; background-color: rgba(255, 255, 255, 0.15);"></div>
-                    <h4 class="text-uppercase m-0 fw-bold" style="font-size: 1.15rem; letter-spacing: 0.5px;">APAR - Oil Sample Monitoring System</h4>
-                </div>
-                <div class="d-flex align-items-center gap-2 gap-md-3">
-                    <!-- Bell Button with badge -->
-                    <button id="notification-bell-btn" class="btn btn-link position-relative p-1 text-white border-0 {% if active_alarms %}notification-bell-pulse{% endif %}" style="text-decoration: none; outline: none; transition: transform 0.2s;" onclick="toggleDrawer()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-bell-fill" viewBox="0 0 16 16">
-                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/>
-                        </svg>
-                        {% if active_alarms %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
-                            {{ active_alarms|length }}
-                        </span>
-                        {% endif %}
-                    </button>
-                    <!-- Developer Options Quick Link -->
-                    <a href="/developer" class="btn btn-sm btn-outline-warning fw-semibold text-uppercase px-2 px-md-3 d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; border-radius: 6px; letter-spacing: 0.5px; border-color: rgba(245, 158, 11, 0.6); color: #fbbf24;" title="Open Developer Options">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-shield-lock-fill" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.464 9.99a11.8 11.8 0 0 0 2.946 2.659c.638.411 1.272.71 1.449.774a1.7 1.7 0 0 0 1.96 0c.177-.064.811-.363 1.449-.774a11.8 11.8 0 0 0 2.946-2.659c1.677-2.195 3.06-5.513 2.464-9.99a1.54 1.54 0 0 0-1.044-1.263 63 63 0 0 0-2.887-.87C9.843.266 8.69 0 8 0m0 5a1.5 1.5 0 0 1 .5 2.915l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595l.384-1.99A1.5 1.5 0 0 1 8 5"/>
-                        </svg>
-                        <span>Dev Options</span>
-                    </a>
-                    <a href="/logout" class="btn btn-sm btn-outline-light fw-bold text-uppercase px-3" style="font-size: 0.8rem; border-radius: 6px; letter-spacing: 0.5px;">Logout</a>
-                </div>
-            </div>
+    <main class="container-fluid my-4 px-3 px-md-5" style="max-width: 1560px;">
+        <!-- Sleek View Selector Tabs (Matching Developer Mode) -->
+        <div class="dev-tabs">
+            <button type="button" class="dev-tab-btn active" id="tab-sample-entry" onclick="switchView('sample-entry')">
+                <span>📝</span> Sample Entry
+            </button>
+            <button type="button" class="dev-tab-btn" id="tab-data-checklist" onclick="switchView('data-checklist')">
+                <span>📋</span> Active Monitoring Ledger
+                <span class="badge" style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); color: #60a5fa; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px;">{{ all_jobs|length }}</span>
+            </button>
+            <button type="button" class="dev-tab-btn" id="tab-about-software" onclick="switchView('about-software')">
+                <span>ℹ️</span> About Software
+            </button>
+        </div>
 
-            <!-- View Selector Tabs -->
-            <div class="view-selector-tabs">
-                <button type="button" class="view-tab-btn active" id="tab-sample-entry" onclick="switchView('sample-entry')">
-                    📝 Sample Entry
-                </button>
-                <button type="button" class="view-tab-btn" id="tab-data-checklist" onclick="switchView('data-checklist')">
-                    📋 Data Check List
-                </button>
-                <button type="button" class="view-tab-btn" id="tab-about-software" onclick="switchView('about-software')">
-                    ℹ️ About Software
-                </button>
-            </div>
+        <!-- VIEW 1: Sample Entry Form -->
+        <div id="view-sample-entry">
+            <div class="content-card p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="fw-bold m-0 text-white" style="font-size: 1.25rem; letter-spacing: 0.5px;">Register Oil Sample Entry</h4>
+                        <p class="text-muted small m-0 mt-1">Submit sample inspection data to assign technical evaluation and initialize dynamic SLA tracking.</p>
+                    </div>
+                    <span class="badge" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #60a5fa; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">
+                        LIVE SYNC
+                    </span>
+                </div>
 
-            <!-- Light Themed Form Body -->
-            <div class="card-body p-4 bg-white">
-                <!-- VIEW 1: Sample Entry Form -->
-                <div id="view-sample-entry">
-                    <form method="POST" action="/" class="row g-3">
-                        
-                        <!-- SECTION 1: Personnel & Assignment -->
-                        <div class="col-12">
-                            <div class="form-section-header">
-                                <span class="form-section-number">1</span>
-                                <span>Personnel & Assignment</span>
-                            </div>
+                <form method="POST" action="/" class="row g-3 mt-2">
+                    
+                    <!-- SECTION 1: Personnel & Assignment -->
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <span class="form-section-number">1</span>
+                            <span>Personnel & Assignment</span>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.executive_name.label if form_config and form_config.field_labels and form_config.field_labels.executive_name else 'Name of Executive' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.executive_name.required != false %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="executive_name" class="form-control" placeholder="{{ form_config.field_labels.executive_name.placeholder if form_config and form_config.field_labels and form_config.field_labels.executive_name else 'e.g. John Doe' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.executive_name.required != false %}required{% endif %}>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.executive_name.label if form_config and form_config.field_labels and form_config.field_labels.executive_name else 'Name of Executive' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.executive_name.required != false %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="executive_name" class="form-control" placeholder="{{ form_config.field_labels.executive_name.placeholder if form_config and form_config.field_labels and form_config.field_labels.executive_name else 'e.g. John Doe' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.executive_name.required != false %}required{% endif %}>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
+                        <select name="handler_name" id="handler_name" class="form-select" required>
+                            <option value="" disabled selected>Select handler...</option>
+                            {% for handler in handlers_list %}
+                                <option value="{{ handler.name }}" data-email="{{ handler.email }}" {% if handler.disabled %}disabled style="color: #64748b; background-color: #070b14;"{% endif %}>
+                                    {{ handler.name }} {% if handler.disabled %}(Locked/Pending){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="handler_email" id="handler_email">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.customer_details.label if form_config and form_config.field_labels and form_config.field_labels.customer_details else 'Customer Details / Segment' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.customer_details.required != false %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="customer_details" class="form-control" placeholder="{{ form_config.field_labels.customer_details.placeholder if form_config and form_config.field_labels and form_config.field_labels.customer_details else 'e.g. BAJAJ MOTORS LIMITED' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.customer_details.required != false %}required{% endif %}>
+                    </div>
+
+                    <!-- SECTION 2: Issue Profile & Timeline -->
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <span class="form-section-number">2</span>
+                            <span>Issue Profile & Timeline</span>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
-                            <select name="handler_name" id="handler_name" class="form-select" required>
-                                <option value="" disabled selected>Select handler...</option>
-                                {% for handler in handlers_list %}
-                                    <option value="{{ handler.name }}" data-email="{{ handler.email }}" {% if handler.disabled %}disabled style="color: #cbd5e1; background-color: #f1f5f9;"{% endif %}>
-                                        {{ handler.name }} {% if handler.disabled %}(Locked/Pending){% endif %}
-                                    </option>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Issue Type<span class="required-dot">*</span></label>
+                        <select name="issue_type" id="issue_type" class="form-select" required>
+                            <option value="" disabled selected>Select profile...</option>
+                            {% if form_config and form_config.dropdowns and form_config.dropdowns.issue_profiles %}
+                                {% for profile in form_config.dropdowns.issue_profiles %}
+                                    <option value="{{ profile.name }}" data-sla="{{ profile.sla_days }}">{{ profile.name }} (+{{ profile.sla_days }} Day{{ 's' if profile.sla_days != 1 else '' }})</option>
                                 {% endfor %}
-                            </select>
-                            <input type="hidden" name="handler_email" id="handler_email">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.customer_details.label if form_config and form_config.field_labels and form_config.field_labels.customer_details else 'Customer Details / Segment' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.customer_details.required != false %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="customer_details" class="form-control" placeholder="{{ form_config.field_labels.customer_details.placeholder if form_config and form_config.field_labels and form_config.field_labels.customer_details else 'e.g. BAJAJ MOTORS LIMITED' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.customer_details.required != false %}required{% endif %}>
-                        </div>
-
-                        <!-- SECTION 2: Issue Profile & Timeline -->
-                        <div class="col-12">
-                            <div class="form-section-header">
-                                <span class="form-section-number">2</span>
-                                <span>Issue Profile & Timeline</span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Issue Type<span class="required-dot">*</span></label>
-                            <select name="issue_type" id="issue_type" class="form-select" required>
-                                <option value="" disabled selected>Select profile...</option>
-                                {% if form_config and form_config.dropdowns and form_config.dropdowns.issue_profiles %}
-                                    {% for profile in form_config.dropdowns.issue_profiles %}
-                                        <option value="{{ profile.name }}" data-sla="{{ profile.sla_days }}">{{ profile.name }} (+{{ profile.sla_days }} Day{{ 's' if profile.sla_days != 1 else '' }})</option>
-                                    {% endfor %}
-                                {% else %}
-                                    <option value="Condition Monitoring" data-sla="7">Condition Monitoring (+7 Days)</option>
-                                    <option value="Complain Handling" data-sla="3">Complain Handling (+3 Days)</option>
-                                    <option value="Product Benchmarking" data-sla="10">Product Benchmarking (+10 Days)</option>
-                                    <option value="Ship Sample" data-sla="1">Ship Sample (+1 Day)</option>
-                                    <option value="Incoming Sample" data-sla="1">Incoming Sample (+1 Day)</option>
-                                {% endif %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Date of Issue<span class="required-dot">*</span></label>
-                            <input type="date" name="issue_date" id="issue_date" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.product_name.label if form_config and form_config.field_labels and form_config.field_labels.product_name else 'Product Full Name (Competitor/APAR)' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.product_name.required != false %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="product_name" class="form-control" placeholder="{{ form_config.field_labels.product_name.placeholder if form_config and form_config.field_labels and form_config.field_labels.product_name else 'e.g. APAR PowerOil' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.product_name.required != false %}required{% endif %}>
-                        </div>
-
-                        <!-- SECTION 3: Sample Specification & Analysis Details -->
-                        <div class="col-12">
-                            <div class="form-section-header">
-                                <span class="form-section-number">3</span>
-                                <span>Sample Specification & Analysis Details</span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.machine_collected.label if form_config and form_config.field_labels and form_config.field_labels.machine_collected else 'Machine From Where Collected' }}{% if form_config and form_config.field_labels and form_config.field_labels.machine_collected.required %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="machine_collected" class="form-control" placeholder="{{ form_config.field_labels.machine_collected.placeholder if form_config and form_config.field_labels and form_config.field_labels.machine_collected else 'e.g. ACME FURNACE' }}" {% if form_config and form_config.field_labels and form_config.field_labels.machine_collected.required %}required{% endif %}>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.point_of_collection.label if form_config and form_config.field_labels and form_config.field_labels.point_of_collection else 'Point of Collection' }}{% if form_config and form_config.field_labels and form_config.field_labels.point_of_collection.required %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="point_of_collection" id="point_of_collection" list="collection_points_list" class="form-control" placeholder="{{ form_config.field_labels.point_of_collection.placeholder if form_config and form_config.field_labels and form_config.field_labels.point_of_collection else 'e.g. Tank drain, Sump' }}" {% if form_config and form_config.field_labels and form_config.field_labels.point_of_collection.required %}required{% endif %}>
-                            <datalist id="collection_points_list">
-                                {% if form_config and form_config.dropdowns and form_config.dropdowns.collection_points %}
-                                    {% for pt in form_config.dropdowns.collection_points %}
-                                        <option value="{{ pt }}">
-                                    {% endfor %}
-                                {% endif %}
-                            </datalist>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.quantity_sent.label if form_config and form_config.field_labels and form_config.field_labels.quantity_sent else 'Quantity Sent' }}{% if form_config and form_config.field_labels and form_config.field_labels.quantity_sent.required %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="quantity_sent" id="quantity_sent" list="quantity_presets_list" class="form-control" placeholder="{{ form_config.field_labels.quantity_sent.placeholder if form_config and form_config.field_labels and form_config.field_labels.quantity_sent else 'e.g. 2 Ltrs.' }}" {% if form_config and form_config.field_labels and form_config.field_labels.quantity_sent.required %}required{% endif %}>
-                            <datalist id="quantity_presets_list">
-                                {% if form_config and form_config.dropdowns and form_config.dropdowns.quantity_presets %}
-                                    {% for q in form_config.dropdowns.quantity_presets %}
-                                        <option value="{{ q }}">
-                                    {% endfor %}
-                                {% endif %}
-                            </datalist>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.competitor_info.label if form_config and form_config.field_labels and form_config.field_labels.competitor_info else "Competitor's Product Info" }}{% if form_config and form_config.field_labels and form_config.field_labels.competitor_info.required %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="competitor_info" class="form-control" placeholder="{{ form_config.field_labels.competitor_info.placeholder if form_config and form_config.field_labels and form_config.field_labels.competitor_info else 'Alternative specifications' }}" {% if form_config and form_config.field_labels and form_config.field_labels.competitor_info.required %}required{% endif %}>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.application_details.label if form_config and form_config.field_labels and form_config.field_labels.application_details else 'Application Details / Oil Type' }}{% if form_config and form_config.field_labels and form_config.field_labels.application_details.required %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="application_details" id="application_details" list="oil_types_list" class="form-control" placeholder="{{ form_config.field_labels.application_details.placeholder if form_config and form_config.field_labels and form_config.field_labels.application_details else 'e.g. Quenching Oil' }}" {% if form_config and form_config.field_labels and form_config.field_labels.application_details.required %}required{% endif %}>
-                            <datalist id="oil_types_list">
-                                {% if form_config and form_config.dropdowns and form_config.dropdowns.oil_types %}
-                                    {% for ot in form_config.dropdowns.oil_types %}
-                                        <option value="{{ ot }}">
-                                    {% endfor %}
-                                {% endif %}
-                            </datalist>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">{{ form_config.field_labels.test_parameters.label if form_config and form_config.field_labels and form_config.field_labels.test_parameters else 'Important Test Parameters / Remarks' }}{% if form_config and form_config.field_labels and form_config.field_labels.test_parameters.required %}<span class="required-dot">*</span>{% endif %}</label>
-                            <input type="text" name="test_parameters" id="test_parameters" class="form-control" placeholder="{{ form_config.field_labels.test_parameters.placeholder if form_config and form_config.field_labels and form_config.field_labels.test_parameters else 'Cooling Curve...' }}" {% if form_config and form_config.field_labels and form_config.field_labels.test_parameters.required %}required{% endif %}>
-                            {% if form_config and form_config.dropdowns and form_config.dropdowns.test_parameters %}
-                                <div class="d-flex flex-wrap gap-1 mt-1.5 align-items-center" style="max-height: 52px; overflow-y: auto;">
-                                    <span class="text-muted" style="font-size: 0.65rem; font-weight: 700;">PRESETS:</span>
-                                    {% for tp in form_config.dropdowns.test_parameters %}
-                                        <button type="button" class="btn btn-sm btn-light border py-0 px-1 text-secondary" style="font-size: 0.67rem; border-radius: 4px; background: #f8fafc;" onclick="appendTestParam('{{ tp|escape }}')">+ {{ tp }}</button>
-                                    {% endfor %}
-                                </div>
+                            {% else %}
+                                <option value="Condition Monitoring" data-sla="7">Condition Monitoring (+7 Days)</option>
+                                <option value="Complain Handling" data-sla="3">Complain Handling (+3 Days)</option>
+                                <option value="Product Benchmarking" data-sla="10">Product Benchmarking (+10 Days)</option>
+                                <option value="Ship Sample" data-sla="1">Ship Sample (+1 Day)</option>
+                                <option value="Incoming Sample" data-sla="1">Incoming Sample (+1 Day)</option>
                             {% endif %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date of Issue<span class="required-dot">*</span></label>
+                        <input type="date" name="issue_date" id="issue_date" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.product_name.label if form_config and form_config.field_labels and form_config.field_labels.product_name else 'Product Full Name (Competitor/APAR)' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.product_name.required != false %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="product_name" class="form-control" placeholder="{{ form_config.field_labels.product_name.placeholder if form_config and form_config.field_labels and form_config.field_labels.product_name else 'e.g. APAR PowerOil' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.product_name.required != false %}required{% endif %}>
+                    </div>
+
+                    <!-- SECTION 3: Sample Specification & Analysis Details -->
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <span class="form-section-number">3</span>
+                            <span>Sample Specification & Analysis Details</span>
                         </div>
-                        
-                        <!-- Redefined Target Deadline Date display (clutter reduction) -->
-                        <div class="col-12 mt-4">
-                            <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" id="deadline-preview-card" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; transition: all 0.3s ease;">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div id="deadline-icon" style="background-color: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; transition: all 0.2s;">
-                                        📅
-                                    </div>
-                                    <div>
-                                        <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Estimated Target Deadline Date</div>
-                                        <div id="deadline_display_val" class="fw-bold" style="font-size: 1.05rem; color: #0f172a;">Awaiting Issue Type & Date...</div>
-                                    </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.machine_collected.label if form_config and form_config.field_labels and form_config.field_labels.machine_collected else 'Machine From Where Collected' }}{% if form_config and form_config.field_labels and form_config.field_labels.machine_collected.required %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="machine_collected" class="form-control" placeholder="{{ form_config.field_labels.machine_collected.placeholder if form_config and form_config.field_labels and form_config.field_labels.machine_collected else 'e.g. ACME FURNACE' }}" {% if form_config and form_config.field_labels and form_config.field_labels.machine_collected.required %}required{% endif %}>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.point_of_collection.label if form_config and form_config.field_labels and form_config.field_labels.point_of_collection else 'Point of Collection' }}{% if form_config and form_config.field_labels and form_config.field_labels.point_of_collection.required %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="point_of_collection" id="point_of_collection" list="collection_points_list" class="form-control" placeholder="{{ form_config.field_labels.point_of_collection.placeholder if form_config and form_config.field_labels and form_config.field_labels.point_of_collection else 'e.g. Tank drain, Sump' }}" {% if form_config and form_config.field_labels and form_config.field_labels.point_of_collection.required %}required{% endif %}>
+                        <datalist id="collection_points_list">
+                            {% if form_config and form_config.dropdowns and form_config.dropdowns.collection_points %}
+                                {% for pt in form_config.dropdowns.collection_points %}
+                                    <option value="{{ pt }}">
+                                {% endfor %}
+                            {% endif %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.quantity_sent.label if form_config and form_config.field_labels and form_config.field_labels.quantity_sent else 'Quantity Sent' }}{% if form_config and form_config.field_labels and form_config.field_labels.quantity_sent.required %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="quantity_sent" id="quantity_sent" list="quantity_presets_list" class="form-control" placeholder="{{ form_config.field_labels.quantity_sent.placeholder if form_config and form_config.field_labels and form_config.field_labels.quantity_sent else 'e.g. 2 Ltrs.' }}" {% if form_config and form_config.field_labels and form_config.field_labels.quantity_sent.required %}required{% endif %}>
+                        <datalist id="quantity_presets_list">
+                            {% if form_config and form_config.dropdowns and form_config.dropdowns.quantity_presets %}
+                                {% for q in form_config.dropdowns.quantity_presets %}
+                                    <option value="{{ q }}">
+                                {% endfor %}
+                            {% endif %}
+                        </datalist>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.competitor_info.label if form_config and form_config.field_labels and form_config.field_labels.competitor_info else "Competitor's Product Info" }}{% if form_config and form_config.field_labels and form_config.field_labels.competitor_info.required %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="competitor_info" class="form-control" placeholder="{{ form_config.field_labels.competitor_info.placeholder if form_config and form_config.field_labels and form_config.field_labels.competitor_info else 'Alternative specifications' }}" {% if form_config and form_config.field_labels and form_config.field_labels.competitor_info.required %}required{% endif %}>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.application_details.label if form_config and form_config.field_labels and form_config.field_labels.application_details else 'Application Details / Oil Type' }}{% if form_config and form_config.field_labels and form_config.field_labels.application_details.required %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="application_details" id="application_details" list="oil_types_list" class="form-control" placeholder="{{ form_config.field_labels.application_details.placeholder if form_config and form_config.field_labels and form_config.field_labels.application_details else 'e.g. Quenching Oil' }}" {% if form_config and form_config.field_labels and form_config.field_labels.application_details.required %}required{% endif %}>
+                        <datalist id="oil_types_list">
+                            {% if form_config and form_config.dropdowns and form_config.dropdowns.oil_types %}
+                                {% for ot in form_config.dropdowns.oil_types %}
+                                    <option value="{{ ot }}">
+                                {% endfor %}
+                            {% endif %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form_config.field_labels.test_parameters.label if form_config and form_config.field_labels and form_config.field_labels.test_parameters else 'Important Test Parameters / Remarks' }}{% if form_config and form_config.field_labels and form_config.field_labels.test_parameters.required %}<span class="required-dot">*</span>{% endif %}</label>
+                        <input type="text" name="test_parameters" id="test_parameters" class="form-control" placeholder="{{ form_config.field_labels.test_parameters.placeholder if form_config and form_config.field_labels and form_config.field_labels.test_parameters else 'Cooling Curve...' }}" {% if form_config and form_config.field_labels and form_config.field_labels.test_parameters.required %}required{% endif %}>
+                        {% if form_config and form_config.dropdowns and form_config.dropdowns.test_parameters %}
+                            <div class="d-flex flex-wrap gap-1.5 mt-2 align-items-center" style="max-height: 58px; overflow-y: auto;">
+                                <span class="text-muted" style="font-size: 0.65rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">QUICK PRESETS:</span>
+                                {% for tp in form_config.dropdowns.test_parameters %}
+                                    <button type="button" class="config-tag-pill" onclick="appendTestParam('{{ tp|escape }}')">+ {{ tp }}</button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Target Deadline Date Preview Card -->
+                    <div class="col-12 mt-4">
+                        <div class="p-3 d-flex align-items-center justify-content-between flex-wrap gap-3" id="deadline-preview-card" style="background-color: #0b1222; border: 1px dashed var(--border-color); border-radius: 14px; transition: all 0.3s ease;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="deadline-icon" style="background-color: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; transition: all 0.2s;">
+                                    📅
                                 </div>
-                                <input type="hidden" id="deadline_date" value="Awaiting Parameters...">
+                                <div>
+                                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.8px;">Calculated SLA Target Deadline</div>
+                                    <div id="deadline_display_val" class="fw-bold mt-0.5" style="font-size: 1.15rem; color: #f8fafc; font-family: 'JetBrains Mono', monospace;">Awaiting Issue Type & Date...</div>
+                                </div>
                             </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 0.7rem; font-weight: 600; padding: 4px 10px; border-radius: 6px;">
+                                    AUTO-CALCULATED
+                                </span>
+                            </div>
+                            <input type="hidden" id="deadline_date" value="Awaiting Parameters...">
                         </div>
-                        
-                        <!-- Submission Controls -->
-                        <div class="col-12 text-center mt-4 d-flex justify-content-center gap-3">
-                            <button type="submit" class="btn btn-submit text-uppercase">Save Submission Data</button>
-                            <button type="button" class="btn btn-refresh text-uppercase" onclick="triggerManualScan()">Scan Ledger & Refresh</button>
-                        </div>
-                    </form>
+                    </div>
+                    
+                    <!-- Submission Controls -->
+                    <div class="col-12 text-center mt-4 pt-2 d-flex justify-content-center flex-wrap gap-3">
+                        <button type="submit" class="btn-submit-primary text-uppercase">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-arrow-up-fill" viewBox="0 0 16 16">
+                                <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0z"/>
+                            </svg>
+                            <span>Save Submission Data</span>
+                        </button>
+                        <button type="button" class="btn-refresh-outline text-uppercase" onclick="triggerManualScan()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+                            </svg>
+                            <span>Scan Ledger & Refresh</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Data Check List (Active Monitoring Ledger) -->
+        <div id="view-data-checklist" style="display: none;">
+            
+            <!-- Metrics KPI Container (Developer Mode Style) -->
+            <div class="metrics-grid">
+                <div class="metric-card accent-blue">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="metric-label">Total Jobs</div>
+                        <span style="font-size: 1.25rem;">📋</span>
+                    </div>
+                    <div class="metric-value" id="stat-total-jobs">0</div>
                 </div>
-
-                <!-- VIEW 2: Data Check List (Jobs Dashboard) -->
-                <div id="view-data-checklist" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bold m-0 text-uppercase" style="font-size: 0.85rem; color: var(--form-text); letter-spacing: 0.5px;">Active Monitoring Ledger</h5>
-                        <div class="d-flex align-items-center gap-3">
-                            <button type="button" class="btn btn-sm btn-success fw-bold text-uppercase px-3" onclick="openExportModal()" style="border-radius: 6px; letter-spacing: 0.5px; background-color: #10b981; border-color: #10b981; font-size: 0.7rem; padding: 6px 12px;">
-                                📊 Export to Excel
-                            </button>
-                            <span class="badge bg-secondary text-uppercase py-1.5 px-3" style="font-size: 0.7rem; border-radius: 6px; letter-spacing: 0.5px;">{{ all_jobs|length }} Jobs Total</span>
-                        </div>
+                <div class="metric-card accent-amber">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="metric-label">Pending Execution</div>
+                        <span style="font-size: 1.25rem;">⏳</span>
                     </div>
-
-                    <!-- Metrics Container -->
-                    <div class="metrics-container">
-                        <div class="metric-card metric-blue">
-                            <div class="metric-icon">📋</div>
-                            <div class="metric-details">
-                                <h3 id="stat-total-jobs">0</h3>
-                                <p>Total Jobs</p>
-                            </div>
-                        </div>
-                        <div class="metric-card metric-amber">
-                            <div class="metric-icon">⏳</div>
-                            <div class="metric-details">
-                                <h3 id="stat-pending-jobs">0</h3>
-                                <p>Pending</p>
-                            </div>
-                        </div>
-                        <div class="metric-card metric-emerald">
-                            <div class="metric-icon">✅</div>
-                            <div class="metric-details">
-                                <h3 id="stat-completed-jobs">0</h3>
-                                <p>Completed</p>
-                            </div>
-                        </div>
-                        <div class="metric-card metric-rose">
-                            <div class="metric-icon">🚨</div>
-                            <div class="metric-details">
-                                <h3 id="stat-alarms">0</h3>
-                                <p>Timeline Alerts</p>
-                            </div>
-                        </div>
+                    <div class="metric-value" id="stat-pending-jobs" style="color: #fbbf24;">0</div>
+                </div>
+                <div class="metric-card accent-green">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="metric-label">Completed Jobs</div>
+                        <span style="font-size: 1.25rem;">✅</span>
                     </div>
+                    <div class="metric-value" id="stat-completed-jobs" style="color: #34d399;">0</div>
+                </div>
+                <div class="metric-card accent-red">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="metric-label">Timeline Alerts</div>
+                        <span style="font-size: 1.25rem;">🚨</span>
+                    </div>
+                    <div class="metric-value" id="stat-alarms" style="color: #f87171;">0</div>
+                </div>
+            </div>
 
-                    <!-- Filter & Search Bar -->
-                    <div class="filter-bar">
-                        <div class="filter-group">
-                            <label for="ledger-search">Search Ledger</label>
-                            <input type="text" id="ledger-search" class="form-control filter-input" placeholder="Search ID, Customer, Executive, Product...">
+            <!-- Ledger Table Container Card -->
+            <div class="content-card">
+                <!-- Search and Filters Toolbar -->
+                <div class="table-toolbar">
+                    <div class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
+                        <div style="min-width: 260px; flex: 1; max-width: 380px;">
+                            <input type="text" id="ledger-search" class="form-control" placeholder="Search ID, Customer, Executive, Product..." style="padding-left: 1rem; font-size: 0.85rem;">
                         </div>
-                        <div class="filter-group">
-                            <label for="ledger-filter-status">Filter Status</label>
-                            <select id="ledger-filter-status" class="form-select filter-select">
+                        <div style="min-width: 170px;">
+                            <select id="ledger-filter-status" class="form-select" style="font-size: 0.85rem;">
                                 <option value="all">All Statuses</option>
                                 <option value="pending">Pending</option>
                                 <option value="done">Done</option>
                             </select>
                         </div>
-                        <div class="filter-group">
-                            <label for="ledger-filter-handler">Filter Handler</label>
-                            <select id="ledger-filter-handler" class="form-select filter-select">
+                        <div style="min-width: 180px;">
+                            <select id="ledger-filter-handler" class="form-select" style="font-size: 0.85rem;">
                                 <option value="all">All Handlers</option>
                             </select>
                         </div>
                     </div>
-
-                    <div class="table-container-wrapper">
-                        <div class="table-responsive-scroll">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th scope="col">ID</th>
-                                        <th scope="col">Executive</th>
-                                        <th scope="col">Handler</th>
-                                        <th scope="col">Handler Email</th>
-                                        <th scope="col">Customer Details</th>
-                                        <th scope="col">Issue Type</th>
-                                        <th scope="col">Issue Date</th>
-                                        <th scope="col">Product Full Name</th>
-                                        <th scope="col">Status</th>
-                                        <th scope="col" style="text-align: center;">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if all_jobs %}
-                                        {% for job in all_jobs %}
-                                        <tr id="job-row-{{ job.id }}" style="transition: background-color 0.2s;">
-                                            <td class="fw-bold" style="color: #0f172a;">#{{ job.id }}</td>
-                                            <td>{{ job.executive_name }}</td>
-                                            <td>{{ job.handler_name }}</td>
-                                            <td>
-                                                {% if job.handler_email %}
-                                                    <a href="mailto:{{ job.handler_email }}" style="color: var(--accent); text-decoration: none;">{{ job.handler_email }}</a>
-                                                {% else %}
-                                                    <span class="text-muted">-</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ job.customer_details }}</td>
-                                            <td>{{ job.issue_type }}</td>
-                                            <td>{{ job.issue_date }}</td>
-                                            <td>{{ job.product_name }}</td>
-                                            <td>
-                                                <span id="badge-{{ job.id }}" class="badge rounded-pill px-2.5 py-1.5 status-badge-item" 
-                                                      data-status="{{ job.status }}" 
-                                                      style="font-size: 0.68rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
-                                                    {{ job.status }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="action-btn-container">
-                                                    <button class="btn btn-sm action-btn-toggle" id="btn-{{ job.id }}" onclick="toggleJobStatus({{ job.id }}, '{{ job.status }}')">
-                                                        Loading...
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-info" id="email-btn-{{ job.id }}" onclick="shootEmail({{ job.id }})" {% if not job.handler_email %}disabled{% endif %}>
-                                                        ✉️ Shoot Email
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="10" class="text-center text-muted py-4">No active jobs found in the ledger.</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Workload Distribution Chart Card -->
-                    <div class="chart-card" style="margin-top: 24px;">
-                        <div class="chart-header">
-                            <span>📊</span> Handler Workload Allocation (Pending vs. Done)
-                        </div>
-                        <div style="position: relative; height: 260px; width: 100%;">
-                            <canvas id="workloadChart"></canvas>
-                        </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-success fw-bold text-uppercase px-3 py-2 d-inline-flex align-items-center gap-1.5" onclick="openExportModal()" style="border-radius: 8px; letter-spacing: 0.5px; background-color: #10b981; border-color: #10b981; font-size: 0.78rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-file-earmark-excel-fill" viewBox="0 0 16 16">
+                                <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M5.884 6.68 8 10.333l2.121-3.653H11.5L8.72 11.23l2.84 4.09H9.91L8 12.066l-1.91 3.254H4.45l2.84-4.09L4.52 6.68z"/>
+                            </svg>
+                            <span>Export Excel</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- VIEW 3: About This Software -->
-                <div id="view-about-software" style="display: none;">
-                    <div class="p-4 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b;">
-                        <h4 class="fw-bold mb-3 text-uppercase" style="font-size: 1.1rem; color: var(--accent); letter-spacing: 1px;">About This Software</h4>
-                        <p class="small text-muted mb-4" style="line-height: 1.6;">
-                            The **APAR Oil Sample Monitoring System** is a real-time web platform designed to streamline sample evaluations, deadline tracking, and task allocations. It connects dynamically to Google Sheets to ensure personnel records and statuses are kept in immediate alignment.
-                        </p>
-                        <hr style="border-top: 1px solid #cbd5e1; margin-bottom: 1.5rem;">
-                        <h5 class="fw-bold mb-3 text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px; color: #475569;">Developer & Credits</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
-                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">Full Name</div>
-                                    <div class="fw-bold text-dark" style="font-size: 0.95rem;">Ram Manthanwar</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
-                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">Email ID</div>
-                                    <div class="fw-bold"><a href="mailto:rmanthanwar@yahoo.com" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">rmanthanwar@yahoo.com</a></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
-                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">LinkedIn Profile</div>
-                                    <div class="fw-bold"><a href="https://www.linkedin.com/in/ram-manthanwar-072763216/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">linkedin.com/in/ram-manthanwar... ↗</a></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
-                                    <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">GitHub Profile</div>
-                                    <div class="fw-bold"><a href="https://github.com/RamManth" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">github.com/RamManth ↗</a></div>
-                                </div>
-                            </div>
-                            <div class="col-12 mt-3">
-                                <div class="p-3 rounded-3 shadow-sm d-flex justify-content-between align-items-center flex-wrap gap-2" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(59, 130, 246, 0.05)); border: 1px solid rgba(245, 158, 11, 0.35);">
-                                    <div>
-                                        <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.95rem;">
-                                            <span class="badge bg-warning text-dark fw-bold">ADMIN</span> Developer Mode & System Control
+                <!-- Responsive Table Wrapper -->
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="dev-table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Executive</th>
+                                <th scope="col">Handler</th>
+                                <th scope="col">Handler Email</th>
+                                <th scope="col">Customer Details</th>
+                                <th scope="col">Issue Type</th>
+                                <th scope="col">Issue Date</th>
+                                <th scope="col">Product Full Name</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" style="text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if all_jobs %}
+                                {% for job in all_jobs %}
+                                <tr id="job-row-{{ job.id }}">
+                                    <td class="fw-bold" style="font-family: 'JetBrains Mono', monospace; color: #60a5fa;">#{{ job.id }}</td>
+                                    <td class="fw-medium text-white">{{ job.executive_name }}</td>
+                                    <td>{{ job.handler_name }}</td>
+                                    <td>
+                                        {% if job.handler_email %}
+                                            <a href="mailto:{{ job.handler_email }}" style="color: #60a5fa; text-decoration: none; font-size: 0.82rem;">{{ job.handler_email }}</a>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ job.customer_details }}</td>
+                                    <td><span class="badge" style="background: rgba(30, 44, 71, 0.7); border: 1px solid var(--border-color); color: #cbd5e1; font-size: 0.72rem;">{{ job.issue_type }}</span></td>
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #94a3b8;">{{ job.issue_date }}</td>
+                                    <td>{{ job.product_name }}</td>
+                                    <td>
+                                        <span id="badge-{{ job.id }}" class="status-badge-item" data-status="{{ job.status }}">
+                                            {{ job.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            <button class="btn-action action-btn-toggle" id="btn-{{ job.id }}" onclick="toggleJobStatus({{ job.id }}, '{{ job.status }}')">
+                                                Loading...
+                                            </button>
+                                            <button class="btn-action btn-email" id="email-btn-{{ job.id }}" onclick="shootEmail({{ job.id }})" {% if not job.handler_email %}disabled style="opacity: 0.4; cursor: not-allowed;"{% endif %} title="Send email reminder to handler">
+                                                ✉️ Email
+                                            </button>
                                         </div>
-                                        <div class="text-secondary small mt-1">Manage technical handler personnel directory, edit portal user credentials, and monitor live workloads.</div>
-                                    </div>
-                                    <a href="/developer" class="btn btn-sm btn-warning text-dark fw-bold px-3 py-2 text-uppercase d-inline-flex align-items-center gap-1" style="font-size: 0.78rem; letter-spacing: 0.5px; border-radius: 6px;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
-                                            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-                                        </svg>
-                                        <span>Launch Dev Mode</span>
-                                    </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-5">
+                                        <div style="font-size: 1.8rem; margin-bottom: 0.5rem;">📭</div>
+                                        <div>No active jobs found in the ledger.</div>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Workload Distribution Chart Card (Developer Mode Theme) -->
+            <div class="content-card p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size: 1.1rem;">📊</span>
+                        <h5 class="fw-bold m-0 text-white text-uppercase" style="font-size: 0.88rem; letter-spacing: 0.8px;">Handler Workload Allocation</h5>
+                    </div>
+                    <span class="badge" style="background: rgba(30, 44, 71, 0.7); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace;">
+                        DYNAMIC CHARTS
+                    </span>
+                </div>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="workloadChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: About This Software -->
+        <div id="view-about-software" style="display: none;">
+            <div class="content-card p-4 p-md-5">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="{{ url_for('static', filename='apar_logo_dark.png') }}" alt="APAR Logo" style="height: 36px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                    <div>
+                        <h4 class="fw-bold m-0 text-white text-uppercase" style="font-size: 1.15rem; letter-spacing: 0.8px;">About APAR Monitoring System</h4>
+                        <span class="text-muted small">Industrial Lubricants & Speciality Oils Enterprise Quality Suite</span>
+                    </div>
+                </div>
+
+                <p class="text-muted mb-4" style="line-height: 1.7; font-size: 0.92rem;">
+                    The <strong class="text-white">APAR Oil Sample Monitoring System</strong> is a real-time web control portal designed to streamline sample evaluations, deadline tracking, and task allocations. Built with automated SLA deadline calculations, dynamic personnel assignments, Google Sheets synchronization, and high-frequency auditory notifications to guarantee zero missed quality inspections.
+                </p>
+
+                <hr style="border-top: 1px solid var(--border-color); margin-bottom: 2rem;">
+
+                <h5 class="fw-bold mb-3 text-uppercase text-muted" style="font-size: 0.78rem; letter-spacing: 1px;">System Engineering & Credits</h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: #090e1a; border: 1px solid var(--border-color);">
+                            <div class="text-muted mb-1" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Architect & Developer</div>
+                            <div class="fw-bold text-white" style="font-size: 1rem;">Ram Manthanwar</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: #090e1a; border: 1px solid var(--border-color);">
+                            <div class="text-muted mb-1" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Direct Email Contact</div>
+                            <div class="fw-bold"><a href="mailto:rmanthanwar@yahoo.com" style="color: #60a5fa; text-decoration: none; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace;">rmanthanwar@yahoo.com</a></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: #090e1a; border: 1px solid var(--border-color);">
+                            <div class="text-muted mb-1" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">LinkedIn Profile</div>
+                            <div class="fw-bold"><a href="https://www.linkedin.com/in/ram-manthanwar-072763216/" target="_blank" rel="noopener noreferrer" style="color: #60a5fa; text-decoration: none; font-size: 0.92rem;">linkedin.com/in/ram-manthanwar... ↗</a></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: #090e1a; border: 1px solid var(--border-color);">
+                            <div class="text-muted mb-1" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">GitHub Source Repository</div>
+                            <div class="fw-bold"><a href="https://github.com/RamManth" target="_blank" rel="noopener noreferrer" style="color: #60a5fa; text-decoration: none; font-size: 0.92rem; font-family: 'JetBrains Mono', monospace;">github.com/RamManth ↗</a></div>
+                        </div>
+                    </div>
+
+                    <!-- Dev Mode Callout Banner -->
+                    <div class="col-12 mt-3">
+                        <div class="p-3.5 p-md-4 rounded-3 d-flex justify-content-between align-items-center flex-wrap gap-3" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(59, 130, 246, 0.05)); border: 1px solid rgba(245, 158, 11, 0.35);">
+                            <div>
+                                <div class="fw-bold text-white d-flex align-items-center gap-2" style="font-size: 1rem;">
+                                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; font-family: 'JetBrains Mono', monospace;">ADMIN ONLY</span> Developer Mode & System Controls
                                 </div>
+                                <div class="text-muted small mt-1">Manage technical handler personnel directory, edit input field labels and dropdown presets, and monitor active database workloads.</div>
                             </div>
+                            <a href="/developer" class="btn btn-sm fw-bold px-3.5 py-2 text-uppercase d-inline-flex align-items-center gap-1.5" style="font-size: 0.8rem; letter-spacing: 0.5px; border-radius: 8px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #070b14; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+                                </svg>
+                                <span>Launch Dev Mode</span>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Alarm audio generated programmatically via Web Audio API -->
+    </main>
 
     <!-- Flash message parsing -> JavaScript Toasts -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -1098,15 +1261,16 @@
             
             const displayVal = document.getElementById('deadline_display_val');
             displayVal.innerText = formattedDate;
-            displayVal.style.color = '#3b82f6';
+            displayVal.style.color = '#38bdf8';
             
             const previewCard = document.getElementById('deadline-preview-card');
-            previewCard.style.backgroundColor = '#eff6ff';
-            previewCard.style.borderColor = '#93c5fd';
+            previewCard.style.backgroundColor = 'rgba(59, 130, 246, 0.08)';
+            previewCard.style.borderColor = 'rgba(59, 130, 246, 0.4)';
             
             const icon = document.getElementById('deadline-icon');
-            icon.style.backgroundColor = '#dbeafe';
-            icon.style.color = '#3b82f6';
+            icon.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+            icon.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+            icon.style.color = '#38bdf8';
             icon.innerText = '⚡';
         }
 
@@ -1154,6 +1318,10 @@
                 dataChecklist.style.display = 'block';
                 tabDataChecklist.classList.add('active');
                 localStorage.setItem('activePortalView', 'data-checklist');
+                // Trigger chart redraw to ensure responsive container calculates correct size
+                if (workloadChart) {
+                    workloadChart.resize();
+                }
             } else if (viewId === 'about-software') {
                 aboutSoftware.style.display = 'block';
                 tabAboutSoftware.classList.add('active');
@@ -1306,14 +1474,16 @@
                                 data: pendingDataset,
                                 backgroundColor: 'rgba(245, 158, 11, 0.85)',
                                 borderColor: '#f59e0b',
-                                borderWidth: 1
+                                borderWidth: 1,
+                                borderRadius: 6
                             },
                             {
                                 label: 'Completed Jobs',
                                 data: completedDataset,
                                 backgroundColor: 'rgba(16, 185, 129, 0.85)',
                                 borderColor: '#10b981',
-                                borderWidth: 1
+                                borderWidth: 1,
+                                borderRadius: 6
                             }
                         ]
                     },
@@ -1330,7 +1500,7 @@
                                         size: 11,
                                         weight: '600'
                                     },
-                                    color: '#475569'
+                                    color: '#cbd5e1'
                                 }
                             }
                         },
@@ -1338,12 +1508,15 @@
                             x: {
                                 stacked: true,
                                 grid: {
-                                    color: '#f1f5f9'
+                                    color: 'rgba(255, 255, 255, 0.05)'
                                 },
                                 ticks: {
-                                    color: '#64748b',
+                                    color: '#94a3b8',
                                     stepSize: 1,
-                                    precision: 0
+                                    precision: 0,
+                                    font: {
+                                        family: "'JetBrains Mono', monospace"
+                                    }
                                 }
                             },
                             y: {
@@ -1352,10 +1525,11 @@
                                     display: false
                                 },
                                 ticks: {
-                                    color: '#475569',
+                                    color: '#e2e8f0',
                                     font: {
                                         family: "'Outfit', sans-serif",
-                                        weight: '600'
+                                        weight: '600',
+                                        size: 12
                                     }
                                 }
                             }
@@ -1390,17 +1564,16 @@
             if (!badge || !btn) return;
             
             badge.innerText = status;
-            badge.className = "badge rounded-pill px-2.5 py-1.5 status-badge-item";
             
             if (status.trim().toLowerCase() === 'done') {
-                badge.classList.add('status-badge-done');
+                badge.className = "status-badge-done";
                 btn.innerText = "Reopen Job ↩";
-                btn.className = "btn btn-sm action-btn-toggle btn-status-done";
+                btn.className = "btn-action btn-status-done action-btn-toggle";
                 btn.onclick = () => toggleJobStatus(jobId, 'Pending');
             } else {
-                badge.classList.add('status-badge-pending');
+                badge.className = "status-badge-pending";
                 btn.innerText = "Mark Done ✓";
-                btn.className = "btn btn-sm action-btn-toggle btn-status-pending";
+                btn.className = "btn-action btn-status-pending action-btn-toggle";
                 btn.onclick = () => toggleJobStatus(jobId, 'Done');
             }
         }
@@ -1430,7 +1603,7 @@
                     updateRowStatusUI(jobId, newStatus);
                     showNotification(`Job #${jobId} status updated to '${newStatus}'!`, "success");
                     
-                    // Show a toast that the dashboard will sync and trigger reload in 1.2s to refresh handlers lists/alerts
+                    // Trigger reload after 1.2s to refresh handlers lists and active alerts
                     setTimeout(() => {
                         window.location.reload();
                     }, 1200);
@@ -1482,21 +1655,19 @@
             
             const now = audioCtx.currentTime + startTime;
             
-            // Create a primary gain node for this specific chime note
+            // Primary gain node
             const noteGain = audioCtx.createGain();
             noteGain.gain.setValueAtTime(0, now);
-            // Smooth rapid attack
             noteGain.gain.linearRampToValueAtTime(0.12, now + 0.02);
-            // Slow exponential decay for wind chime ring-out
             noteGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
             noteGain.connect(audioCtx.destination);
             
-            // Fundamental oscillator (triangle wave for warmth)
+            // Fundamental oscillator
             const osc1 = audioCtx.createOscillator();
             osc1.type = 'triangle';
             osc1.frequency.setValueAtTime(freq, now);
             
-            // Sub oscillator (sine wave 1 octave down for depth)
+            // Sub oscillator
             const oscSub = audioCtx.createOscillator();
             oscSub.type = 'sine';
             oscSub.frequency.setValueAtTime(freq / 2, now);
@@ -1506,13 +1677,13 @@
             oscSub.connect(subGain);
             subGain.connect(noteGain);
             
-            // Overtones (harmonic partials to give a rich musical bell feel)
+            // Overtones
             const oscTine = audioCtx.createOscillator();
             oscTine.type = 'sine';
-            oscTine.frequency.setValueAtTime(freq * 3, now); // perfect fifth overtone
+            oscTine.frequency.setValueAtTime(freq * 3, now);
             const tineGain = audioCtx.createGain();
             tineGain.gain.setValueAtTime(0.06, now);
-            tineGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35); // fast decay
+            tineGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
             oscTine.connect(tineGain);
             tineGain.connect(noteGain);
             
@@ -1530,7 +1701,6 @@
             const noteEntry = { noteGain, oscillators: [osc1, oscSub, oscTine], startTime: now };
             activeNodes.push(noteEntry);
             
-            // Clean up node references after they have fully decayed
             setTimeout(() => {
                 activeNodes = activeNodes.filter(n => n !== noteEntry);
             }, (duration + 0.5) * 1000);
@@ -1539,8 +1709,6 @@
         function triggerMelodySequence() {
             if (isSnoozed() || !alarmTriggered) return;
             
-            // A beautiful, cascading melodious arpeggio (C Major Pentatonic)
-            // It plays a soft, premium notification sound sequence
             const melody = [
                 { freq: 523.25, delay: 0.0, dur: 1.2 }, // C5
                 { freq: 659.25, delay: 0.15, dur: 1.2 }, // E5
@@ -1554,7 +1722,6 @@
                 playSynthNote(note.freq, note.delay, note.dur);
             });
             
-            // Loop the melody every 6 seconds to be alerting but not constantly screeching
             chimeTimeout = setTimeout(triggerMelodySequence, 6000);
         }
 
@@ -1571,7 +1738,6 @@
         }
 
         function snoozeAlarm() {
-            // Stop scheduled chimes
             if (chimeTimeout) {
                 clearTimeout(chimeTimeout);
                 chimeTimeout = null;
@@ -1580,13 +1746,12 @@
             alarmTriggered = false;
             localStorage.setItem('alarmSnoozeExpiry', Date.now() + 300000);
             
-            // Fast fade-out for currently active note generators
             const now = audioCtx ? audioCtx.currentTime : 0;
             activeNodes.forEach(node => {
                 try {
                     node.noteGain.gain.cancelScheduledValues(now);
                     node.noteGain.gain.setValueAtTime(node.noteGain.gain.value, now);
-                    node.noteGain.gain.linearRampToValueAtTime(0, now + 0.15); // fade in 150ms
+                    node.noteGain.gain.linearRampToValueAtTime(0, now + 0.15);
                     setTimeout(() => {
                         node.oscillators.forEach(osc => {
                             try { osc.stop(); } catch(e) {}
@@ -1612,7 +1777,6 @@
                 setTimeout(() => backdrop.classList.add('show'), 10);
             }
             
-            // Remove bell vibration pulse once opened
             if (bell) {
                 bell.classList.remove('notification-bell-pulse');
             }
@@ -1653,7 +1817,7 @@
             toast.innerHTML = `
                 <div style="font-size: 1.1rem; line-height: 1;">${iconMarkup}</div>
                 <div style="flex-grow: 1; font-size: 0.85rem; font-weight: 500;">${message}</div>
-                <button type="button" class="btn-close btn-close-white" style="font-size: 0.7rem; padding: 0.2rem; margin: -0.2rem -0.2rem -0.2rem auto; outline: none; box-shadow: none;" onclick="this.parentElement.remove()"></button>
+                <button type="button" class="btn-close btn-close-white" style="font-size: 0.65rem; padding: 0.2rem; margin: -0.2rem -0.2rem -0.2rem auto; outline: none; box-shadow: none;" onclick="this.parentElement.remove()"></button>
             `;
             
             container.appendChild(toast);
@@ -1808,20 +1972,18 @@
                     tr.style.borderBottom = '1px solid var(--border-color)';
                     
                     const isDone = job.status.toLowerCase() === 'done';
-                    const badgeColor = isDone ? 'var(--success-text)' : 'var(--danger-text)';
-                    const badgeBg = isDone ? 'var(--success-bg)' : 'var(--danger-bg)';
-                    const badgeBorder = isDone ? 'var(--success-border)' : 'var(--danger-border)';
+                    const badgeClass = isDone ? 'status-badge-done' : 'status-badge-pending';
                     
                     tr.innerHTML = `
-                        <td style="padding: 12px 16px; font-weight: bold; color: var(--text-main);">#${job.id}</td>
-                        <td style="padding: 12px 16px;">${job.executive_name}</td>
-                        <td style="padding: 12px 16px;">${job.handler_name}</td>
-                        <td style="padding: 12px 16px;">${job.customer_details}</td>
-                        <td style="padding: 12px 16px;">${job.issue_type}</td>
-                        <td style="padding: 12px 16px;">${job.issue_date}</td>
-                        <td style="padding: 12px 16px;">${job.product_name}</td>
-                        <td style="padding: 12px 16px;">
-                            <span class="badge" style="background-color: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; font-size: 0.65rem; text-transform: uppercase;">
+                        <td style="padding: 10px 14px; font-weight: bold; font-family: 'JetBrains Mono', monospace; color: #60a5fa;">#${job.id}</td>
+                        <td style="padding: 10px 14px; color: #f8fafc;">${job.executive_name}</td>
+                        <td style="padding: 10px 14px; color: #cbd5e1;">${job.handler_name}</td>
+                        <td style="padding: 10px 14px; color: #cbd5e1;">${job.customer_details}</td>
+                        <td style="padding: 10px 14px; color: #cbd5e1;">${job.issue_type}</td>
+                        <td style="padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #94a3b8;">${job.issue_date}</td>
+                        <td style="padding: 10px 14px; color: #cbd5e1;">${job.product_name}</td>
+                        <td style="padding: 10px 14px;">
+                            <span class="${badgeClass}">
                                 ${job.status}
                             </span>
                         </td>
@@ -1928,31 +2090,33 @@
     <!-- Export to Excel Modal -->
     <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content" style="background-color: var(--header-bg); border: 1px solid var(--border-color); border-radius: 20px; color: var(--text-main);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title fw-bold text-uppercase" id="exportModalLabel" style="font-size: 0.95rem; letter-spacing: 0.5px; color: var(--accent);">📊 Export Ledger to Excel</h5>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-uppercase" id="exportModalLabel" style="font-size: 0.95rem; letter-spacing: 0.5px; color: #60a5fa;">
+                        📊 Export Monitoring Ledger to Excel
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="box-shadow: none; outline: none;"></button>
                 </div>
-                <div class="modal-body" style="padding: 2rem;">
+                <div class="modal-body" style="padding: 1.75rem 2rem;">
                     <!-- Filter Section -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-3">
-                            <label for="export-filter-start" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Start Issue Date</label>
-                            <input type="date" id="export-filter-start" class="form-control" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                            <label for="export-filter-start" class="form-label">Start Issue Date</label>
+                            <input type="date" id="export-filter-start" class="form-control">
                         </div>
                         <div class="col-md-3">
-                            <label for="export-filter-end" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">End Issue Date</label>
-                            <input type="date" id="export-filter-end" class="form-control" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                            <label for="export-filter-end" class="form-label">End Issue Date</label>
+                            <input type="date" id="export-filter-end" class="form-control">
                         </div>
                         <div class="col-md-3">
-                            <label for="export-filter-handler" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Handler</label>
-                            <select id="export-filter-handler" class="form-select" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                            <label for="export-filter-handler" class="form-label">Handler</label>
+                            <select id="export-filter-handler" class="form-select">
                                 <option value="all">All Handlers</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label for="export-filter-status" class="form-label" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;">Job Status</label>
-                            <select id="export-filter-status" class="form-select" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px;">
+                            <label for="export-filter-status" class="form-label">Job Status</label>
+                            <select id="export-filter-status" class="form-select">
                                 <option value="all">All Statuses</option>
                                 <option value="pending">Pending</option>
                                 <option value="done">Done</option>
@@ -1963,26 +2127,26 @@
                     <!-- Matches Count Indicator -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div style="font-size: 0.85rem; color: var(--text-muted);">
-                            Records Found: <strong id="export-match-count" class="text-info" style="font-size: 1rem;">0</strong>
+                            Records Found: <strong id="export-match-count" style="font-size: 1rem; color: #38bdf8; font-family: 'JetBrains Mono', monospace;">0</strong>
                         </div>
-                        <button type="button" class="btn btn-success fw-bold text-uppercase px-4 py-2" onclick="downloadExcelFile()" style="background-color: #10b981; border-color: #10b981; border-radius: 8px; font-size: 0.8rem; letter-spacing: 0.5px;">
-                            📥 Download Excel
+                        <button type="button" class="btn btn-success fw-bold text-uppercase px-4 py-2 d-inline-flex align-items-center gap-2" onclick="downloadExcelFile()" style="background-color: #10b981; border-color: #10b981; border-radius: 8px; font-size: 0.8rem; letter-spacing: 0.5px;">
+                            <span>📥 Download Spreadsheet</span>
                         </button>
                     </div>
 
                     <!-- Preview Table wrapper -->
-                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; background-color: var(--bg-main);">
-                        <table class="table table-hover align-middle mb-0" id="export-preview-table" style="color: var(--text-main);">
-                            <thead style="position: sticky; top: 0; background-color: var(--header-bg); z-index: 1; border-bottom: 1px solid var(--border-color);">
-                                <tr style="border-bottom: 1px solid var(--border-color);">
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">ID</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Executive</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Handler</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Customer Details</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Issue Type</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Issue Date</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Product</th>
-                                    <th scope="col" style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; padding: 12px 16px;">Status</th>
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; background-color: var(--input-bg);">
+                        <table class="dev-table align-middle" id="export-preview-table">
+                            <thead style="position: sticky; top: 0; background-color: #0b111e; z-index: 1;">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Executive</th>
+                                    <th>Handler</th>
+                                    <th>Customer Details</th>
+                                    <th>Issue Type</th>
+                                    <th>Issue Date</th>
+                                    <th>Product</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
