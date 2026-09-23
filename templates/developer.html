@@ -493,6 +493,37 @@
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+
+        /* Config Tag Pills */
+        .config-tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(30, 44, 71, 0.7);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            transition: all 0.2s ease;
+        }
+        .config-tag-pill:hover {
+            border-color: var(--accent-dev);
+            background: rgba(245, 158, 11, 0.12);
+        }
+        .config-tag-pill .btn-remove-tag {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+        .config-tag-pill .btn-remove-tag:hover {
+            color: var(--accent-red);
+        }
     </style>
 </head>
 <body>
@@ -593,6 +624,13 @@
                 </svg>
                 Portal Login Users
                 <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ users|length }}</span>
+            </button>
+            <button type="button" class="dev-tab-btn" id="btn-tab-config" onclick="switchDevTab('config')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                </svg>
+                Form & Dropdown Config
+                <span class="badge ms-1" style="background: rgba(245, 158, 11, 0.25); color: var(--accent-dev); font-size: 0.7rem; border: 1px solid rgba(245, 158, 11, 0.35);">Live</span>
             </button>
         </div>
 
@@ -780,6 +818,185 @@
                                 <td colspan="6" class="text-center py-4 text-muted">No users found.</td>
                             </tr>
                             {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Form & Dropdown Config Tab -->
+        <div id="section-config" style="display: none;">
+            <!-- Top Controls Bar -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2 text-white">
+                        <span style="color: var(--accent-dev);">⚙️</span> Form Inputs & Dropdown Editor
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-dev); font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.4); letter-spacing: 0.5px;">LIVE SYNC ENGINE</span>
+                    </h4>
+                    <p class="text-muted small mb-0">Configure sample issue types, turnaround SLAs, dropdown option lists, and custom field labels. Changes synchronize to Google Sheets and immediately reflect in the Operations Portal.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary text-white border-secondary" onclick="openResetConfigModal()" style="border-radius: 8px; font-weight: 600; font-size: 0.82rem; padding: 0.5rem 1rem;">
+                        ↺ Reset Defaults
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning fw-bold text-dark d-inline-flex align-items-center gap-2" id="btn-save-all-config" onclick="saveConfigToServer()" style="background-color: var(--accent-dev); border-color: var(--accent-dev); border-radius: 8px; font-size: 0.85rem; padding: 0.52rem 1.3rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-arrow-up-fill" viewBox="0 0 16 16">
+                            <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                        <span>Save & Sync to Google Sheets</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 1: Issue Profiles & Dynamic Turnaround SLA Days -->
+            <div class="content-card mb-4">
+                <div class="table-toolbar">
+                    <div>
+                        <div class="fw-bold fs-6 text-light d-flex align-items-center gap-2">
+                            <span>⏱️</span> Issue Profiles & SLA Turnaround Days
+                        </div>
+                        <div class="text-muted small">Controls the Issue Type dropdown and drives the automatic deadline date calculation in the Operations Portal.</div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn-add-primary" onclick="openAddProfileModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                            </svg>
+                            Add Issue Profile
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="dev-table" id="table-issue-profiles">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">#</th>
+                                <th>Profile Name</th>
+                                <th style="width: 200px;">SLA Turnaround (Days)</th>
+                                <th>Portal Preview</th>
+                                <th style="width: 120px; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-issue-profiles">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Card 2: Dropdown Menus & Autocomplete Presets Grid -->
+            <div class="row g-4 mb-4">
+                <!-- 2A: Oil Types -->
+                <div class="col-12 col-lg-6">
+                    <div class="content-card h-100 p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                                    <span>🛢️</span> Application Details / Oil Types
+                                </h6>
+                                <div class="text-muted small">Options for application details & oil selection</div>
+                            </div>
+                            <span class="badge bg-secondary" id="badge-count-oil-types">0</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" id="input-new-oil-type" class="form-control form-control-sm search-input" placeholder="e.g. Synthetic Turbine Oil" style="border-radius: 8px 0 0 8px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addTagOption('oil_types','input-new-oil-type');}">
+                            <button class="btn btn-sm btn-outline-warning" type="button" onclick="addTagOption('oil_types', 'input-new-oil-type')" style="border-radius: 0 8px 8px 0; font-weight: 600;">+ Add</button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2" id="container-tags-oil-types" style="min-height: 85px; max-height: 220px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border-color);">
+                            <!-- Tag pills -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2B: Collection Points -->
+                <div class="col-12 col-lg-6">
+                    <div class="content-card h-100 p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                                    <span>📍</span> Point of Collection Presets
+                                </h6>
+                                <div class="text-muted small">Standard collection points for fast selection</div>
+                            </div>
+                            <span class="badge bg-secondary" id="badge-count-collection-points">0</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" id="input-new-collection-point" class="form-control form-control-sm search-input" placeholder="e.g. Sampling Cock Valve" style="border-radius: 8px 0 0 8px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addTagOption('collection_points','input-new-collection-point');}">
+                            <button class="btn btn-sm btn-outline-warning" type="button" onclick="addTagOption('collection_points', 'input-new-collection-point')" style="border-radius: 0 8px 8px 0; font-weight: 600;">+ Add</button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2" id="container-tags-collection-points" style="min-height: 85px; max-height: 220px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border-color);">
+                            <!-- Tag pills -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2C: Quantity Sent Presets -->
+                <div class="col-12 col-lg-6">
+                    <div class="content-card h-100 p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                                    <span>🧪</span> Quantity Sent Presets
+                                </h6>
+                                <div class="text-muted small">Standard sample bottle sizes and volumes</div>
+                            </div>
+                            <span class="badge bg-secondary" id="badge-count-quantity-presets">0</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" id="input-new-quantity" class="form-control form-control-sm search-input" placeholder="e.g. 250 mL Bottle" style="border-radius: 8px 0 0 8px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addTagOption('quantity_presets','input-new-quantity');}">
+                            <button class="btn btn-sm btn-outline-warning" type="button" onclick="addTagOption('quantity_presets', 'input-new-quantity')" style="border-radius: 0 8px 8px 0; font-weight: 600;">+ Add</button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2" id="container-tags-quantity-presets" style="min-height: 85px; max-height: 220px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border-color);">
+                            <!-- Tag pills -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2D: Important Test Parameters Quick-Tags -->
+                <div class="col-12 col-lg-6">
+                    <div class="content-card h-100 p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                                    <span>🔬</span> Test Parameters & Inspection Checklist
+                                </h6>
+                                <div class="text-muted small">Clickable quick-tags shown directly under Remarks in Portal</div>
+                            </div>
+                            <span class="badge bg-secondary" id="badge-count-test-parameters">0</span>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" id="input-new-test-param" class="form-control form-control-sm search-input" placeholder="e.g. FTIR Oxidation Index" style="border-radius: 8px 0 0 8px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addTagOption('test_parameters','input-new-test-param');}">
+                            <button class="btn btn-sm btn-outline-warning" type="button" onclick="addTagOption('test_parameters', 'input-new-test-param')" style="border-radius: 0 8px 8px 0; font-weight: 600;">+ Add</button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2" id="container-tags-test-parameters" style="min-height: 85px; max-height: 220px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border-color);">
+                            <!-- Tag pills -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Field Labels & Input Configuration -->
+            <div class="content-card mb-4">
+                <div class="table-toolbar">
+                    <div>
+                        <div class="fw-bold fs-6 text-white d-flex align-items-center gap-2">
+                            <span>📝</span> Form Field Labels, Placeholders & Mandatory Rules
+                        </div>
+                        <div class="text-muted small">Customize labels, placeholder instructions, and toggle mandatory vs optional inputs for field technicians.</div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="dev-table" id="table-field-labels">
+                        <thead>
+                            <tr>
+                                <th style="width: 220px;">System Field Name</th>
+                                <th>Display Label</th>
+                                <th>Placeholder Hint</th>
+                                <th style="width: 150px; text-align: center;">Mandatory (*)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-field-labels">
+                            <!-- Populated dynamically by JS -->
                         </tbody>
                     </table>
                 </div>
@@ -981,6 +1198,59 @@
         </div>
     </div>
 
+    <!-- MODAL 7: Add Issue Profile -->
+    <div class="modal fade" id="addProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span style="color: var(--accent-dev);">⏱️</span> Add New Issue Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-add-profile" onsubmit="event.preventDefault(); submitAddProfile();">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Issue Profile Name</label>
+                            <input type="text" id="new_profile_name" class="form-control" placeholder="e.g. Urgent Breakdown Analysis" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Target SLA Turnaround (in Days)</label>
+                            <input type="number" id="new_profile_sla" class="form-control" min="1" max="180" value="3" required>
+                            <div class="form-text text-muted small">Estimated target deadline date will be automatically set to Issue Date + this many days.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold">Add Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 8: Reset Form Configuration Confirmation -->
+    <div class="modal fade" id="resetConfigModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header border-danger">
+                    <h5 class="modal-title text-danger">
+                        <span>⚠️</span> Reset Form & Dropdown Defaults
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Are you sure you want to restore all form dropdown options, SLAs, and field labels back to <strong>APAR Factory Defaults</strong>?</p>
+                    <p class="text-muted small mb-0">Custom additions to oil types, collection points, and SLA configurations will be reverted. Existing logged sample records in Google Sheets will remain untouched.</p>
+                </div>
+                <div class="modal-footer border-danger">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger fw-bold" onclick="resetConfigToDefaults()">Yes, Restore Defaults</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -990,29 +1260,38 @@
         function switchDevTab(tab) {
             const btnHandlers = document.getElementById('btn-tab-handlers');
             const btnUsers = document.getElementById('btn-tab-users');
+            const btnConfig = document.getElementById('btn-tab-config');
             const secHandlers = document.getElementById('section-handlers');
             const secUsers = document.getElementById('section-users');
+            const secConfig = document.getElementById('section-config');
+
+            [btnHandlers, btnUsers, btnConfig].forEach(b => b && b.classList.remove('active'));
+            [secHandlers, secUsers, secConfig].forEach(s => s && (s.style.display = 'none'));
 
             if (tab === 'handlers') {
                 btnHandlers.classList.add('active');
-                btnUsers.classList.remove('active');
                 secHandlers.style.display = 'block';
-                secUsers.style.display = 'none';
                 window.location.hash = 'handlers';
-            } else {
+            } else if (tab === 'users') {
                 btnUsers.classList.add('active');
-                btnHandlers.classList.remove('active');
-                secHandlers.style.display = 'none';
                 secUsers.style.display = 'block';
                 window.location.hash = 'users';
+            } else if (tab === 'config') {
+                btnConfig.classList.add('active');
+                secConfig.style.display = 'block';
+                window.location.hash = 'config';
+                renderConfigUI();
             }
         }
 
         // Initialize active tab from hash and ensure session is preserved for operations portal
         document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('tab_authenticated', 'true');
+            initFormConfig();
             if (window.location.hash === '#users') {
                 switchDevTab('users');
+            } else if (window.location.hash === '#config') {
+                switchDevTab('config');
             }
         });
 
@@ -1125,12 +1404,9 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        // Close modal
                         const modalEl = document.getElementById(modalId);
                         const modalInstance = bootstrap.Modal.getInstance(modalEl);
                         if (modalInstance) modalInstance.hide();
-                        
-                        // Show success and reload page to reflect Google Sheets update
                         window.location.reload();
                     } else {
                         alert(data.error || 'Operation failed');
@@ -1139,7 +1415,6 @@
                     }
                 })
                 .catch(err => {
-                    // Fallback to standard form submit if JSON fetch fails
                     form.submit();
                 });
             });
@@ -1151,6 +1426,334 @@
         bindAjaxForm('form-add-user', 'addUserModal');
         bindAjaxForm('form-edit-user', 'editUserModal');
         bindAjaxForm('form-delete-user', 'deleteUserModal');
+
+        // ==========================================
+        // DYNAMIC FORM CONFIGURATION JAVASCRIPT
+        // ==========================================
+        let formConfig = {{ form_config | tojson }};
+        let isConfigDirty = false;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function initFormConfig() {
+            if (!formConfig.dropdowns) formConfig.dropdowns = {};
+            if (!formConfig.dropdowns.issue_profiles) formConfig.dropdowns.issue_profiles = [];
+            if (!formConfig.dropdowns.oil_types) formConfig.dropdowns.oil_types = [];
+            if (!formConfig.dropdowns.collection_points) formConfig.dropdowns.collection_points = [];
+            if (!formConfig.dropdowns.quantity_presets) formConfig.dropdowns.quantity_presets = [];
+            if (!formConfig.dropdowns.test_parameters) formConfig.dropdowns.test_parameters = [];
+            if (!formConfig.field_labels) formConfig.field_labels = {};
+            renderConfigUI();
+        }
+
+        function renderConfigUI() {
+            renderIssueProfiles();
+            renderTagContainer('oil_types', 'container-tags-oil-types', 'badge-count-oil-types');
+            renderTagContainer('collection_points', 'container-tags-collection-points', 'badge-count-collection-points');
+            renderTagContainer('quantity_presets', 'container-tags-quantity-presets', 'badge-count-quantity-presets');
+            renderTagContainer('test_parameters', 'container-tags-test-parameters', 'badge-count-test-parameters');
+            renderFieldLabels();
+        }
+
+        function renderIssueProfiles() {
+            const tbody = document.getElementById('tbody-issue-profiles');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const profiles = formConfig.dropdowns.issue_profiles || [];
+            if (profiles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No issue profiles configured.</td></tr>';
+                return;
+            }
+            profiles.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-muted font-monospace">${idx + 1}</td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm search-input fw-bold" value="${escapeHtml(p.name)}" oninput="updateProfileName(${idx}, this.value)" style="max-width: 320px;">
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm" style="max-width: 150px;">
+                            <input type="number" min="1" max="180" class="form-control form-control-sm search-input font-monospace text-center" value="${p.sla_days}" oninput="updateProfileSLA(${idx}, this.value)">
+                            <span class="input-group-text font-monospace small" style="background: #111a2e; border-color: var(--border-color); color: var(--text-muted);">Days</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); color: #60a5fa; font-size: 0.8rem; padding: 5px 10px; border-radius: 6px;">
+                            ${escapeHtml(p.name)} (+${p.sla_days} Days)
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button type="button" class="btn-action delete" onclick="deleteIssueProfile(${idx})" title="Delete Issue Profile">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateProfileName(idx, val) {
+            if (formConfig.dropdowns.issue_profiles[idx]) {
+                formConfig.dropdowns.issue_profiles[idx].name = val.trim();
+                markConfigDirty();
+            }
+        }
+
+        function updateProfileSLA(idx, val) {
+            if (formConfig.dropdowns.issue_profiles[idx]) {
+                formConfig.dropdowns.issue_profiles[idx].sla_days = parseInt(val) || 1;
+                markConfigDirty();
+            }
+        }
+
+        function deleteIssueProfile(idx) {
+            if (formConfig.dropdowns.issue_profiles && formConfig.dropdowns.issue_profiles.length > idx) {
+                const name = formConfig.dropdowns.issue_profiles[idx].name;
+                if (confirm(`Remove '${name}' from Issue Profiles?`)) {
+                    formConfig.dropdowns.issue_profiles.splice(idx, 1);
+                    renderIssueProfiles();
+                    markConfigDirty();
+                }
+            }
+        }
+
+        function openAddProfileModal() {
+            document.getElementById('new_profile_name').value = '';
+            document.getElementById('new_profile_sla').value = '3';
+            new bootstrap.Modal(document.getElementById('addProfileModal')).show();
+        }
+
+        function submitAddProfile() {
+            const name = document.getElementById('new_profile_name').value.trim();
+            const sla = parseInt(document.getElementById('new_profile_sla').value) || 1;
+            if (!name) return;
+
+            const existing = formConfig.dropdowns.issue_profiles.some(p => p.name.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                alert(`An issue profile named '${name}' already exists.`);
+                return;
+            }
+
+            formConfig.dropdowns.issue_profiles.push({
+                name: name,
+                sla_days: sla,
+                color: "#3b82f6"
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('addProfileModal')).hide();
+            renderIssueProfiles();
+            markConfigDirty();
+        }
+
+        function renderTagContainer(key, containerId, badgeCountId) {
+            const container = document.getElementById(containerId);
+            const badge = document.getElementById(badgeCountId);
+            if (!container) return;
+            container.innerHTML = '';
+            const list = formConfig.dropdowns[key] || [];
+            if (badge) badge.innerText = list.length;
+            if (list.length === 0) {
+                container.innerHTML = '<span class="text-muted small p-2">No options added yet.</span>';
+                return;
+            }
+            list.forEach((val, idx) => {
+                const span = document.createElement('span');
+                span.className = 'config-tag-pill';
+                span.innerHTML = `
+                    <span>${escapeHtml(val)}</span>
+                    <button type="button" class="btn-remove-tag" onclick="removeTagOption('${key}', ${idx})" title="Remove option">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                        </svg>
+                    </button>
+                `;
+                container.appendChild(span);
+            });
+        }
+
+        function addTagOption(key, inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const val = input.value.trim();
+            if (!val) return;
+            if (!formConfig.dropdowns[key]) formConfig.dropdowns[key] = [];
+            if (!formConfig.dropdowns[key].includes(val)) {
+                formConfig.dropdowns[key].push(val);
+                input.value = '';
+                renderTagContainer(key, 
+                    key === 'oil_types' ? 'container-tags-oil-types' :
+                    key === 'collection_points' ? 'container-tags-collection-points' :
+                    key === 'quantity_presets' ? 'container-tags-quantity-presets' : 'container-tags-test-parameters',
+                    key === 'oil_types' ? 'badge-count-oil-types' :
+                    key === 'collection_points' ? 'badge-count-collection-points' :
+                    key === 'quantity_presets' ? 'badge-count-quantity-presets' : 'badge-count-test-parameters'
+                );
+                markConfigDirty();
+            } else {
+                alert(`Option '${val}' already exists.`);
+            }
+        }
+
+        function removeTagOption(key, idx) {
+            if (formConfig.dropdowns[key] && formConfig.dropdowns[key].length > idx) {
+                formConfig.dropdowns[key].splice(idx, 1);
+                renderTagContainer(key, 
+                    key === 'oil_types' ? 'container-tags-oil-types' :
+                    key === 'collection_points' ? 'container-tags-collection-points' :
+                    key === 'quantity_presets' ? 'container-tags-quantity-presets' : 'container-tags-test-parameters',
+                    key === 'oil_types' ? 'badge-count-oil-types' :
+                    key === 'collection_points' ? 'badge-count-collection-points' :
+                    key === 'quantity_presets' ? 'badge-count-quantity-presets' : 'badge-count-test-parameters'
+                );
+                markConfigDirty();
+            }
+        }
+
+        const FIELD_DISPLAY_NAMES = {
+            "executive_name": "Executive Name",
+            "customer_details": "Customer Details / Segment",
+            "product_name": "Product Full Name",
+            "machine_collected": "Machine Collected From",
+            "point_of_collection": "Point of Collection",
+            "quantity_sent": "Quantity Sent",
+            "competitor_info": "Competitor Product Info",
+            "application_details": "Application Details / Oil Type",
+            "test_parameters": "Test Parameters / Remarks"
+        };
+
+        function renderFieldLabels() {
+            const tbody = document.getElementById('tbody-field-labels');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const fields = formConfig.field_labels || {};
+            Object.keys(fields).forEach(key => {
+                const item = fields[key];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="fw-bold text-light">${FIELD_DISPLAY_NAMES[key] || key}</div>
+                        <code class="small text-muted" style="font-size: 0.75rem;">name="${key}"</code>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm search-input" value="${escapeHtml(item.label || '')}" oninput="updateFieldSetting('${key}', 'label', this.value)">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm search-input" value="${escapeHtml(item.placeholder || '')}" oninput="updateFieldSetting('${key}', 'placeholder', this.value)">
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check form-switch d-inline-block">
+                            <input class="form-check-input" type="checkbox" role="switch" ${item.required ? 'checked' : ''} onchange="updateFieldSetting('${key}', 'required', this.checked)">
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateFieldSetting(key, prop, val) {
+            if (!formConfig.field_labels[key]) formConfig.field_labels[key] = {};
+            formConfig.field_labels[key][prop] = val;
+            markConfigDirty();
+        }
+
+        function markConfigDirty() {
+            isConfigDirty = true;
+            const btn = document.getElementById('btn-save-all-config');
+            if (btn) {
+                btn.style.boxShadow = '0 0 15px rgba(245, 158, 11, 0.6)';
+            }
+        }
+
+        function saveConfigToServer() {
+            const btn = document.getElementById('btn-save-all-config');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Syncing to Google Sheets...`;
+
+            fetch('/developer/config/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formConfig)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                if (data.success) {
+                    isConfigDirty = false;
+                    btn.style.boxShadow = '';
+                    showToast(data.message || 'Form configuration saved and synced to Google Sheets!', 'success');
+                } else {
+                    alert(data.error || 'Failed to save configuration');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                alert('Connection error: ' + err.message);
+            });
+        }
+
+        function openResetConfigModal() {
+            new bootstrap.Modal(document.getElementById('resetConfigModal')).show();
+        }
+
+        function resetConfigToDefaults() {
+            const modalEl = document.getElementById('resetConfigModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            fetch('/developer/config/reset', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Restored to defaults!', 'success');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    alert(data.error || 'Failed to reset configuration');
+                }
+            })
+            .catch(err => {
+                window.location.reload();
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            toast.style.borderColor = type === 'success' ? '#10b981' : '#ef4444';
+            toast.innerHTML = `
+                <span style="font-size: 1.2rem;">${type === 'success' ? '✅' : '⚠️'}</span>
+                <div>
+                    <div class="fw-bold" style="color: ${type === 'success' ? '#34d399' : '#f87171'}">${type === 'success' ? 'Synchronized' : 'Notice'}</div>
+                    <div class="small text-white">${message}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
     </script>
 </body>
 </html>

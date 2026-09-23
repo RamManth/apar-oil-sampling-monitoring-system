@@ -1,0 +1,118 @@
+{
+  "dropdowns": {
+    "issue_profiles": [
+      {
+        "color": "#3b82f6",
+        "name": "Condition Monitoring",
+        "sla_days": 7
+      },
+      {
+        "color": "#ef4444",
+        "name": "Complain Handling",
+        "sla_days": 3
+      },
+      {
+        "color": "#8b5cf6",
+        "name": "Product Benchmarking",
+        "sla_days": 10
+      },
+      {
+        "color": "#f59e0b",
+        "name": "Ship Sample",
+        "sla_days": 1
+      },
+      {
+        "color": "#10b981",
+        "name": "Incoming Sample",
+        "sla_days": 1
+      }
+    ],
+    "oil_types": [
+      "Quenching Oil",
+      "Transformer Oil",
+      "Specialty Cutting Oil",
+      "Turbine Oil",
+      "Hydraulic Oil",
+      "Gear Oil",
+      "Engine Oil",
+      "Compressor Oil",
+      "Rust Preventive Oil"
+    ],
+    "collection_points": [
+      "Tank Drain",
+      "Sump Tank",
+      "Machine Reservoir",
+      "Circulation Line",
+      "Filter Outlet",
+      "Header Pipe",
+      "Top Inspection Hatch",
+      "Bottom Sampling Valve"
+    ],
+    "quantity_presets": [
+      "500 mL",
+      "1 Litre",
+      "2 Litres",
+      "5 Litres",
+      "Sample Bottle (Standard)"
+    ],
+    "test_parameters": [
+      "Cooling Curve Analysis",
+      "Kinematic Viscosity @ 40\u00b0C",
+      "Flash Point (COC)",
+      "Water Content / Karl Fischer (PPM)",
+      "Breakdown Voltage (BDV kV)",
+      "Total Acid Number (TAN mg KOH/g)",
+      "Dielectric Dissipation Factor (Tan Delta)",
+      "Particle Count (NAS / ISO 4406)",
+      "Interfacial Tension (IFT)",
+      "Specific Resistance (Resistivity)"
+    ]
+  },
+  "field_labels": {
+    "executive_name": {
+      "label": "Name of Executive",
+      "placeholder": "e.g. John Doe",
+      "required": true
+    },
+    "customer_details": {
+      "label": "Customer Details / Segment",
+      "placeholder": "e.g. BAJAJ MOTORS LIMITED",
+      "required": true
+    },
+    "product_name": {
+      "label": "Product Full Name (Competitor/APAR)",
+      "placeholder": "e.g. APAR PowerOil",
+      "required": true
+    },
+    "machine_collected": {
+      "label": "Machine From Where Collected",
+      "placeholder": "e.g. ACME FURNACE",
+      "required": false
+    },
+    "point_of_collection": {
+      "label": "Point of Collection",
+      "placeholder": "e.g. Tank drain, Sump",
+      "required": false
+    },
+    "quantity_sent": {
+      "label": "Quantity Sent",
+      "placeholder": "e.g. 2 Ltrs.",
+      "required": false
+    },
+    "competitor_info": {
+      "label": "Competitor's Product Info",
+      "placeholder": "Alternative specifications",
+      "required": false
+    },
+    "application_details": {
+      "label": "Application Details / Oil Type",
+      "placeholder": "e.g. Quenching Oil",
+      "required": false
+    },
+    "test_parameters": {
+      "label": "Important Test Parameters / Remarks",
+      "placeholder": "Cooling Curve...",
+      "required": false
+    }
+  }
+}

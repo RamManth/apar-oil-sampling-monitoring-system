@@ -178,6 +178,190 @@ def create_users_tab_if_missing(service, spreadsheet_id):
     except Exception as e:
         print(f"⚠️ Error checking/creating 'Users' tab: {e}")
 
+DEFAULT_FORM_CONFIG = {
+    "dropdowns": {
+        "issue_profiles": [
+            {"name": "Condition Monitoring", "sla_days": 7, "color": "#3b82f6"},
+            {"name": "Complain Handling", "sla_days": 3, "color": "#ef4444"},
+            {"name": "Product Benchmarking", "sla_days": 10, "color": "#8b5cf6"},
+            {"name": "Ship Sample", "sla_days": 1, "color": "#f59e0b"},
+            {"name": "Incoming Sample", "sla_days": 1, "color": "#10b981"}
+        ],
+        "oil_types": [
+            "Quenching Oil",
+            "Transformer Oil",
+            "Specialty Cutting Oil",
+            "Turbine Oil",
+            "Hydraulic Oil",
+            "Gear Oil",
+            "Engine Oil",
+            "Compressor Oil",
+            "Rust Preventive Oil"
+        ],
+        "collection_points": [
+            "Tank Drain",
+            "Sump Tank",
+            "Machine Reservoir",
+            "Circulation Line",
+            "Filter Outlet",
+            "Header Pipe",
+            "Top Inspection Hatch",
+            "Bottom Sampling Valve"
+        ],
+        "quantity_presets": [
+            "500 mL",
+            "1 Litre",
+            "2 Litres",
+            "5 Litres",
+            "Sample Bottle (Standard)"
+        ],
+        "test_parameters": [
+            "Cooling Curve Analysis",
+            "Kinematic Viscosity @ 40°C",
+            "Flash Point (COC)",
+            "Water Content / Karl Fischer (PPM)",
+            "Breakdown Voltage (BDV kV)",
+            "Total Acid Number (TAN mg KOH/g)",
+            "Dielectric Dissipation Factor (Tan Delta)",
+            "Particle Count (NAS / ISO 4406)",
+            "Interfacial Tension (IFT)",
+            "Specific Resistance (Resistivity)"
+        ]
+    },
+    "field_labels": {
+        "executive_name": {"label": "Name of Executive", "placeholder": "e.g. John Doe", "required": True},
+        "customer_details": {"label": "Customer Details / Segment", "placeholder": "e.g. BAJAJ MOTORS LIMITED", "required": True},
+        "product_name": {"label": "Product Full Name (Competitor/APAR)", "placeholder": "e.g. APAR PowerOil", "required": True},
+        "machine_collected": {"label": "Machine From Where Collected", "placeholder": "e.g. ACME FURNACE", "required": False},
+        "point_of_collection": {"label": "Point of Collection", "placeholder": "e.g. Tank drain, Sump", "required": False},
+        "quantity_sent": {"label": "Quantity Sent", "placeholder": "e.g. 2 Ltrs.", "required": False},
+        "competitor_info": {"label": "Competitor's Product Info", "placeholder": "Alternative specifications", "required": False},
+        "application_details": {"label": "Application Details / Oil Type", "placeholder": "e.g. Quenching Oil", "required": False},
+        "test_parameters": {"label": "Important Test Parameters / Remarks", "placeholder": "Cooling Curve...", "required": False}
+    }
+}
+
+def create_form_config_tab_if_missing(service, spreadsheet_id):
+    """Checks if 'Form Configuration' tab exists in Google Sheets. If not, creates it and initializes with default config."""
+    try:
+        sheet_metadata = service.get(spreadsheetId=spreadsheet_id).execute()
+        sheets = sheet_metadata.get('sheets', [])
+        tab_names = [s.get('properties', {}).get('title') for s in sheets]
+        
+        if "Form Configuration" not in tab_names:
+            requests = [{
+                'addSheet': {
+                    'properties': {
+                        'title': 'Form Configuration'
+                    }
+                }
+            }]
+            service.batchUpdate(spreadsheetId=spreadsheet_id, body={'requests': requests}).execute()
+            
+            headers = [
+                ["Config_Key", "Config_JSON", "Updated_At"],
+                ["system_form_config", json.dumps(DEFAULT_FORM_CONFIG), datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+            ]
+            service.values().update(
+                spreadsheetId=spreadsheet_id,
+                range="Form Configuration!A1:C2",
+                valueInputOption="RAW",
+                body={'values': headers}
+            ).execute()
+            print("Successfully created 'Form Configuration' tab with default system configuration.")
+    except Exception as e:
+        print(f"⚠️ Error checking/creating 'Form Configuration' tab: {e}")
+
+def merge_config_defaults(user_config):
+    """Deep merges user config with DEFAULT_FORM_CONFIG to ensure all keys and subkeys exist."""
+    import copy
+    merged = copy.deepcopy(DEFAULT_FORM_CONFIG)
+    if not isinstance(user_config, dict):
+        return merged
+    
+    if "dropdowns" in user_config and isinstance(user_config["dropdowns"], dict):
+        for k, v in user_config["dropdowns"].items():
+            if isinstance(v, list):
+                merged["dropdowns"][k] = v
+                
+    if "field_labels" in user_config and isinstance(user_config["field_labels"], dict):
+        for field_k, field_v in user_config["field_labels"].items():
+            if field_k in merged["field_labels"] and isinstance(field_v, dict):
+                merged["field_labels"][field_k].update(field_v)
+            elif isinstance(field_v, dict):
+                merged["field_labels"][field_k] = field_v
+    return merged
+
+def get_form_config():
+    """Fetches the active form configuration with caching and fallbacks."""
+    cached = sheets_cache.get("form_config", ttl_seconds=300)
+    if cached is not None:
+        return cached
+
+    # 1. Try Google Sheets tab
+    try:
+        service = get_sheets_service()
+        create_form_config_tab_if_missing(service, SPREADSHEET_ID)
+        result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Form Configuration!A2:C2").execute()
+        rows = result.get('values', [])
+        if rows and len(rows) > 0 and len(rows[0]) > 1 and rows[0][1].strip():
+            config_data = json.loads(rows[0][1])
+            merged = merge_config_defaults(config_data)
+            sheets_cache.set("form_config", merged)
+            return merged
+    except Exception as e:
+        print(f"⚠️ Error loading form config from Google Sheets: {e}")
+
+    # 2. Fallback to local form_config.json if available
+    local_cfg_path = os.path.join(BASE_DIR, "form_config.json")
+    if os.path.exists(local_cfg_path):
+        try:
+            with open(local_cfg_path, "r", encoding="utf-8") as f:
+                local_data = json.load(f)
+                merged = merge_config_defaults(local_data)
+                sheets_cache.set("form_config", merged)
+                return merged
+        except Exception as e:
+            print(f"⚠️ Error reading local form_config.json: {e}")
+
+    # 3. Fallback to DEFAULT_FORM_CONFIG
+    sheets_cache.set("form_config", DEFAULT_FORM_CONFIG)
+    return DEFAULT_FORM_CONFIG
+
+def save_form_config(new_config):
+    """Saves updated form configuration to Google Sheets and local disk."""
+    merged = merge_config_defaults(new_config)
+    json_str = json.dumps(merged, indent=2)
+
+    # 1. Update local file if writable
+    try:
+        local_cfg_path = os.path.join(BASE_DIR, "form_config.json")
+        with open(local_cfg_path, "w", encoding="utf-8") as f:
+            f.write(json_str)
+    except Exception as e:
+        print(f"⚠️ Notice: Local form_config.json write deferred (expected on read-only cloud): {e}")
+
+    # 2. Update Google Sheets
+    service = get_sheets_service()
+    create_form_config_tab_if_missing(service, SPREADSHEET_ID)
+    body = {
+        'values': [[
+            "system_form_config",
+            json_str,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ]]
+    }
+    service.values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range="Form Configuration!A2:C2",
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+    
+    # 3. Update in-memory cache
+    sheets_cache.set("form_config", merged)
+    return True
+
 def get_tab_sheet_id(service, spreadsheet_id, tab_name):
     """Retrieves the integer sheetId for a given sheet tab title."""
     try:
@@ -924,14 +1108,29 @@ def calculate_deadline(issue_date_str, issue_type):
         base_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
     except ValueError:
         base_date = datetime.now()
-    days_mapping = {
-        "Condition Monitoring": 7,
-        "Complain Handling": 3,
-        "Product Benchmarking": 10,
-        "Ship Sample": 1,
-        "Incoming Sample": 1
-    }
-    return (base_date + timedelta(days=days_mapping.get(issue_type, 0))).strftime("%d-%m-%Y")
+    
+    days = 0
+    try:
+        cfg = get_form_config()
+        profiles = cfg.get("dropdowns", {}).get("issue_profiles", [])
+        for p in profiles:
+            if p.get("name", "").strip().lower() == issue_type.strip().lower():
+                days = int(p.get("sla_days", 0))
+                break
+        else:
+            days_mapping = {
+                "Condition Monitoring": 7,
+                "Complain Handling": 3,
+                "Product Benchmarking": 10,
+                "Ship Sample": 1,
+                "Incoming Sample": 1
+            }
+            days = days_mapping.get(issue_type, 0)
+    except Exception as e:
+        print(f"⚠️ Error calculating deadline from config: {e}")
+        days = 0
+
+    return (base_date + timedelta(days=days)).strftime("%d-%m-%Y")
 
 @app.route('/', methods=['GET', 'POST'])
 def evaluation_form():
@@ -999,7 +1198,8 @@ def evaluation_form():
     active_alarms = check_upcoming_alarms()
     handlers_list = get_handlers_status()
     all_jobs = get_all_jobs()
-    return render_template('form.html', active_alarms=active_alarms, handlers_list=handlers_list, all_jobs=all_jobs)
+    form_config = get_form_config()
+    return render_template('form.html', active_alarms=active_alarms, handlers_list=handlers_list, all_jobs=all_jobs, form_config=form_config)
 
 @app.route('/mark_done/<int:record_id>', methods=['POST'])
 def mark_done(record_id):
@@ -1328,13 +1528,15 @@ def developer_mode():
     total_handlers = len(handlers)
     total_users = len(users)
     active_jobs = sum(h.get('pending_jobs', 0) for h in handlers)
+    form_config = get_form_config()
     return render_template(
         'developer.html',
         handlers=handlers,
         users=users,
         total_handlers=total_handlers,
         total_users=total_users,
-        active_jobs=active_jobs
+        active_jobs=active_jobs,
+        form_config=form_config
     )
 
 @app.route('/developer/login', methods=['POST'])
@@ -1556,6 +1758,57 @@ def dev_delete_user():
         if is_api:
             return {"success": False, "error": str(e)}, 500
         flash(f"Failed to delete user: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/config/update', methods=['POST'])
+def dev_update_config():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+
+    try:
+        if request.is_json:
+            config_data = request.get_json()
+        else:
+            raw_payload = request.form.get('config_json', '')
+            if raw_payload:
+                config_data = json.loads(raw_payload)
+            else:
+                config_data = request.form.to_dict()
+                
+        save_form_config(config_data)
+        if is_api:
+            return {"success": True, "message": "Form fields & dropdown configuration saved and synced successfully!"}
+        flash("Form fields & dropdown configuration saved and synced successfully!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to save form configuration: {e}", "danger")
+    return redirect(url_for('developer_mode'))
+
+@app.route('/developer/config/reset', methods=['POST'])
+def dev_reset_config():
+    is_api = wants_json_response()
+    if not check_dev_auth():
+        if is_api:
+            return {"success": False, "error": "Unauthorized Developer Session"}, 401
+        flash("Developer authentication required.", "danger")
+        return redirect(url_for('developer_mode'))
+
+    try:
+        import copy
+        reset_config = copy.deepcopy(DEFAULT_FORM_CONFIG)
+        save_form_config(reset_config)
+        if is_api:
+            return {"success": True, "message": "Form configuration restored to APAR factory defaults!"}
+        flash("Form configuration restored to APAR factory defaults!", "success")
+    except Exception as e:
+        if is_api:
+            return {"success": False, "error": str(e)}, 500
+        flash(f"Failed to reset form configuration: {e}", "danger")
     return redirect(url_for('developer_mode'))
 
 @app.errorhandler(404)

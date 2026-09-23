@@ -709,8 +709,8 @@
                         </div>
                         
                         <div class="col-md-4">
-                            <label class="form-label">Name of Executive<span class="required-dot">*</span></label>
-                            <input type="text" name="executive_name" class="form-control" placeholder="e.g. John Doe" required>
+                            <label class="form-label">{{ form_config.field_labels.executive_name.label if form_config and form_config.field_labels and form_config.field_labels.executive_name else 'Name of Executive' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.executive_name.required != false %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="executive_name" class="form-control" placeholder="{{ form_config.field_labels.executive_name.placeholder if form_config and form_config.field_labels and form_config.field_labels.executive_name else 'e.g. John Doe' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.executive_name.required != false %}required{% endif %}>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Allocate Handler<span class="required-dot">*</span></label>
@@ -725,8 +725,8 @@
                             <input type="hidden" name="handler_email" id="handler_email">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Customer Details / Segment<span class="required-dot">*</span></label>
-                            <input type="text" name="customer_details" class="form-control" placeholder="e.g. BAJAJ MOTORS LIMITED" required>
+                            <label class="form-label">{{ form_config.field_labels.customer_details.label if form_config and form_config.field_labels and form_config.field_labels.customer_details else 'Customer Details / Segment' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.customer_details.required != false %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="customer_details" class="form-control" placeholder="{{ form_config.field_labels.customer_details.placeholder if form_config and form_config.field_labels and form_config.field_labels.customer_details else 'e.g. BAJAJ MOTORS LIMITED' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.customer_details.required != false %}required{% endif %}>
                         </div>
 
                         <!-- SECTION 2: Issue Profile & Timeline -->
@@ -741,11 +741,17 @@
                             <label class="form-label">Issue Type<span class="required-dot">*</span></label>
                             <select name="issue_type" id="issue_type" class="form-select" required>
                                 <option value="" disabled selected>Select profile...</option>
-                                <option value="Condition Monitoring">Condition Monitoring (+7 Days)</option>
-                                <option value="Complain Handling">Complain Handling (+3 Days)</option>
-                                <option value="Product Benchmarking">Product Benchmarking (+10 Days)</option>
-                                <option value="Ship Sample">Ship Sample (+1 Day)</option>
-                                <option value="Incoming Sample">Incoming Sample (+1 Day)</option>
+                                {% if form_config and form_config.dropdowns and form_config.dropdowns.issue_profiles %}
+                                    {% for profile in form_config.dropdowns.issue_profiles %}
+                                        <option value="{{ profile.name }}" data-sla="{{ profile.sla_days }}">{{ profile.name }} (+{{ profile.sla_days }} Day{{ 's' if profile.sla_days != 1 else '' }})</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="Condition Monitoring" data-sla="7">Condition Monitoring (+7 Days)</option>
+                                    <option value="Complain Handling" data-sla="3">Complain Handling (+3 Days)</option>
+                                    <option value="Product Benchmarking" data-sla="10">Product Benchmarking (+10 Days)</option>
+                                    <option value="Ship Sample" data-sla="1">Ship Sample (+1 Day)</option>
+                                    <option value="Incoming Sample" data-sla="1">Incoming Sample (+1 Day)</option>
+                                {% endif %}
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -753,8 +759,8 @@
                             <input type="date" name="issue_date" id="issue_date" class="form-control" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Product Full Name (Competitor/APAR)<span class="required-dot">*</span></label>
-                            <input type="text" name="product_name" class="form-control" placeholder="e.g. APAR PowerOil" required>
+                            <label class="form-label">{{ form_config.field_labels.product_name.label if form_config and form_config.field_labels and form_config.field_labels.product_name else 'Product Full Name (Competitor/APAR)' }}{% if not form_config or not form_config.field_labels or form_config.field_labels.product_name.required != false %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="product_name" class="form-control" placeholder="{{ form_config.field_labels.product_name.placeholder if form_config and form_config.field_labels and form_config.field_labels.product_name else 'e.g. APAR PowerOil' }}" {% if not form_config or not form_config.field_labels or form_config.field_labels.product_name.required != false %}required{% endif %}>
                         </div>
 
                         <!-- SECTION 3: Sample Specification & Analysis Details -->
@@ -766,29 +772,58 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Machine From Where Collected</label>
-                            <input type="text" name="machine_collected" class="form-control" placeholder="e.g. ACME FURNACE">
+                            <label class="form-label">{{ form_config.field_labels.machine_collected.label if form_config and form_config.field_labels and form_config.field_labels.machine_collected else 'Machine From Where Collected' }}{% if form_config and form_config.field_labels and form_config.field_labels.machine_collected.required %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="machine_collected" class="form-control" placeholder="{{ form_config.field_labels.machine_collected.placeholder if form_config and form_config.field_labels and form_config.field_labels.machine_collected else 'e.g. ACME FURNACE' }}" {% if form_config and form_config.field_labels and form_config.field_labels.machine_collected.required %}required{% endif %}>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Point of Collection</label>
-                            <input type="text" name="point_of_collection" class="form-control" placeholder="e.g. Tank drain, Sump">
+                            <label class="form-label">{{ form_config.field_labels.point_of_collection.label if form_config and form_config.field_labels and form_config.field_labels.point_of_collection else 'Point of Collection' }}{% if form_config and form_config.field_labels and form_config.field_labels.point_of_collection.required %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="point_of_collection" id="point_of_collection" list="collection_points_list" class="form-control" placeholder="{{ form_config.field_labels.point_of_collection.placeholder if form_config and form_config.field_labels and form_config.field_labels.point_of_collection else 'e.g. Tank drain, Sump' }}" {% if form_config and form_config.field_labels and form_config.field_labels.point_of_collection.required %}required{% endif %}>
+                            <datalist id="collection_points_list">
+                                {% if form_config and form_config.dropdowns and form_config.dropdowns.collection_points %}
+                                    {% for pt in form_config.dropdowns.collection_points %}
+                                        <option value="{{ pt }}">
+                                    {% endfor %}
+                                {% endif %}
+                            </datalist>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Quantity Sent</label>
-                            <input type="text" name="quantity_sent" class="form-control" placeholder="e.g. 2 Ltrs.">
+                            <label class="form-label">{{ form_config.field_labels.quantity_sent.label if form_config and form_config.field_labels and form_config.field_labels.quantity_sent else 'Quantity Sent' }}{% if form_config and form_config.field_labels and form_config.field_labels.quantity_sent.required %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="quantity_sent" id="quantity_sent" list="quantity_presets_list" class="form-control" placeholder="{{ form_config.field_labels.quantity_sent.placeholder if form_config and form_config.field_labels and form_config.field_labels.quantity_sent else 'e.g. 2 Ltrs.' }}" {% if form_config and form_config.field_labels and form_config.field_labels.quantity_sent.required %}required{% endif %}>
+                            <datalist id="quantity_presets_list">
+                                {% if form_config and form_config.dropdowns and form_config.dropdowns.quantity_presets %}
+                                    {% for q in form_config.dropdowns.quantity_presets %}
+                                        <option value="{{ q }}">
+                                    {% endfor %}
+                                {% endif %}
+                            </datalist>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label">Competitor's Product Info</label>
-                            <input type="text" name="competitor_info" class="form-control" placeholder="Alternative specifications">
+                            <label class="form-label">{{ form_config.field_labels.competitor_info.label if form_config and form_config.field_labels and form_config.field_labels.competitor_info else "Competitor's Product Info" }}{% if form_config and form_config.field_labels and form_config.field_labels.competitor_info.required %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="competitor_info" class="form-control" placeholder="{{ form_config.field_labels.competitor_info.placeholder if form_config and form_config.field_labels and form_config.field_labels.competitor_info else 'Alternative specifications' }}" {% if form_config and form_config.field_labels and form_config.field_labels.competitor_info.required %}required{% endif %}>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Application Details / Oil Type</label>
-                            <input type="text" name="application_details" class="form-control" placeholder="e.g. Quenching Oil">
+                            <label class="form-label">{{ form_config.field_labels.application_details.label if form_config and form_config.field_labels and form_config.field_labels.application_details else 'Application Details / Oil Type' }}{% if form_config and form_config.field_labels and form_config.field_labels.application_details.required %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="application_details" id="application_details" list="oil_types_list" class="form-control" placeholder="{{ form_config.field_labels.application_details.placeholder if form_config and form_config.field_labels and form_config.field_labels.application_details else 'e.g. Quenching Oil' }}" {% if form_config and form_config.field_labels and form_config.field_labels.application_details.required %}required{% endif %}>
+                            <datalist id="oil_types_list">
+                                {% if form_config and form_config.dropdowns and form_config.dropdowns.oil_types %}
+                                    {% for ot in form_config.dropdowns.oil_types %}
+                                        <option value="{{ ot }}">
+                                    {% endfor %}
+                                {% endif %}
+                            </datalist>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Important Test Parameters / Remarks</label>
-                            <input type="text" name="test_parameters" class="form-control" placeholder="Cooling Curve...">
+                            <label class="form-label">{{ form_config.field_labels.test_parameters.label if form_config and form_config.field_labels and form_config.field_labels.test_parameters else 'Important Test Parameters / Remarks' }}{% if form_config and form_config.field_labels and form_config.field_labels.test_parameters.required %}<span class="required-dot">*</span>{% endif %}</label>
+                            <input type="text" name="test_parameters" id="test_parameters" class="form-control" placeholder="{{ form_config.field_labels.test_parameters.placeholder if form_config and form_config.field_labels and form_config.field_labels.test_parameters else 'Cooling Curve...' }}" {% if form_config and form_config.field_labels and form_config.field_labels.test_parameters.required %}required{% endif %}>
+                            {% if form_config and form_config.dropdowns and form_config.dropdowns.test_parameters %}
+                                <div class="d-flex flex-wrap gap-1 mt-1.5 align-items-center" style="max-height: 52px; overflow-y: auto;">
+                                    <span class="text-muted" style="font-size: 0.65rem; font-weight: 700;">PRESETS:</span>
+                                    {% for tp in form_config.dropdowns.test_parameters %}
+                                        <button type="button" class="btn btn-sm btn-light border py-0 px-1 text-secondary" style="font-size: 0.67rem; border-radius: 4px; background: #f8fafc;" onclick="appendTestParam('{{ tp|escape }}')">+ {{ tp }}</button>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Redefined Target Deadline Date display (clutter reduction) -->
@@ -1035,16 +1070,22 @@
 
         // Live calculation of target deadline
         function updateDeadline() {
-            const issueType = document.getElementById('issue_type').value;
+            const selectEl = document.getElementById('issue_type');
+            const issueType = selectEl.value;
             const issueDateVal = document.getElementById('issue_date').value;
             if (!issueType || !issueDateVal) return;
 
+            const selectedOption = selectEl.options[selectEl.selectedIndex];
             let daysToAdd = 0;
-            if (issueType === "Condition Monitoring") daysToAdd = 7;
-            else if (issueType === "Complain Handling") daysToAdd = 3;
-            else if (issueType === "Product Benchmarking") daysToAdd = 10;
-            else if (issueType === "Ship Sample") daysToAdd = 1;
-            else if (issueType === "Incoming Sample") daysToAdd = 1;
+            if (selectedOption && selectedOption.getAttribute('data-sla')) {
+                daysToAdd = parseInt(selectedOption.getAttribute('data-sla'), 10) || 0;
+            } else {
+                if (issueType === "Condition Monitoring") daysToAdd = 7;
+                else if (issueType === "Complain Handling") daysToAdd = 3;
+                else if (issueType === "Product Benchmarking") daysToAdd = 10;
+                else if (issueType === "Ship Sample") daysToAdd = 1;
+                else if (issueType === "Incoming Sample") daysToAdd = 1;
+            }
 
             const dateParts = issueDateVal.split('-');
             const targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
@@ -1067,6 +1108,18 @@
             icon.style.backgroundColor = '#dbeafe';
             icon.style.color = '#3b82f6';
             icon.innerText = '⚡';
+        }
+
+        function appendTestParam(param) {
+            const input = document.getElementById('test_parameters');
+            if (!input) return;
+            const current = input.value.trim();
+            if (!current) {
+                input.value = param;
+            } else if (!current.toLowerCase().includes(param.toLowerCase())) {
+                input.value = current + ', ' + param;
+            }
+            input.focus();
         }
 
         document.getElementById('issue_type').addEventListener('change', updateDeadline);
