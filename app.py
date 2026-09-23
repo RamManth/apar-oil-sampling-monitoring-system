@@ -11,6 +11,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from itsdangerous import URLSafeTimedSerializer
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+from urllib.parse import parse_qs, urlencode
 
 class SheetsCache:
     def __init__(self):
@@ -60,6 +61,27 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static')
 )
+
+class VercelQueryPathMiddleware:
+    """Extracts original route path passed via __path query parameter on Vercel."""
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        qs = environ.get('QUERY_STRING', '')
+        if '__path=' in qs:
+            params = parse_qs(qs, keep_blank_values=True)
+            if '__path' in params and params['__path']:
+                target_path = params.pop('__path')[0]
+                if not target_path.startswith('/'):
+                    target_path = '/' + target_path
+                environ['PATH_INFO'] = target_path
+                environ['RAW_URI'] = target_path
+                environ['REQUEST_URI'] = target_path
+                environ['QUERY_STRING'] = urlencode(params, doseq=True)
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = VercelQueryPathMiddleware(app.wsgi_app)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "apar_default_secret_key_for_dev_only")
 DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "apar2026")
 
