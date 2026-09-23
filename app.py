@@ -1560,8 +1560,7 @@ def dev_delete_user():
 
 @app.errorhandler(404)
 def handle_404(e):
-    print(f"[FLASK 404] path={request.path}, method={request.method}, url={request.url}, environ_path={request.environ.get('PATH_INFO')}")
-    return f"404 Not Found on server for: {request.path}", 404
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5001, debug=True)
