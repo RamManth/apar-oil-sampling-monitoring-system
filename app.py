@@ -1257,6 +1257,95 @@ def update_status(record_id):
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
 
+def delete_job_from_sheet(record_id):
+    """Deletes an evaluation job row from 'Evaluation Data Rowwise' by matching the job ID."""
+    service = get_sheets_service()
+    result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:A").execute()
+    ids = result.get('values', [])
+    
+    row_target = None
+    for idx, row_id_list in enumerate(ids):
+        if row_id_list and str(row_id_list[0]).strip() == str(record_id).strip():
+            row_target = idx + 6
+            break
+
+    if not row_target:
+        raise ValueError(f"Job with ID #{record_id} not found in the Monitoring Ledger.")
+
+    delete_sheet_row(service, SPREADSHEET_ID, "Evaluation Data Rowwise", row_target)
+    sheets_cache.clear()
+    return True
+
+@app.route('/delete_job/<record_id>', methods=['POST'])
+def delete_job(record_id):
+    try:
+        delete_job_from_sheet(record_id)
+        return {"success": True, "message": f"Job #{record_id} successfully deleted from Google Sheets!"}
+    except ValueError as ve:
+        return {"success": False, "error": str(ve)}, 404
+    except Exception as e:
+        print(f"❌ Error deleting job #{record_id}: {e}")
+        return {"success": False, "error": str(e)}, 500
+
+def delete_jobs_batch_from_sheet(record_ids):
+    """Deletes multiple evaluation job rows from 'Evaluation Data Rowwise' atomically."""
+    if not record_ids:
+        return 0
+    
+    target_ids = {str(rid).strip() for rid in record_ids if str(rid).strip()}
+    if not target_ids:
+        return 0
+
+    service = get_sheets_service()
+    result = service.values().get(spreadsheetId=SPREADSHEET_ID, range="Evaluation Data Rowwise!A6:A").execute()
+    ids = result.get('values', [])
+    
+    rows_to_delete = []
+    for idx, row_id_list in enumerate(ids):
+        if row_id_list and str(row_id_list[0]).strip() in target_ids:
+            rows_to_delete.append(idx + 6)
+
+    if not rows_to_delete:
+        raise ValueError("None of the specified jobs were found in the Monitoring Ledger.")
+
+    sheet_id = get_tab_sheet_id(service, SPREADSHEET_ID, "Evaluation Data Rowwise")
+    if sheet_id is None:
+        raise ValueError("Sheet tab 'Evaluation Data Rowwise' not found")
+
+    # Sort descending so row deletions do not shift preceding row indices
+    requests = [
+        {
+            'deleteDimension': {
+                'range': {
+                    'sheetId': sheet_id,
+                    'dimension': 'ROWS',
+                    'startIndex': r - 1,
+                    'endIndex': r
+                }
+            }
+        }
+        for r in sorted(rows_to_delete, reverse=True)
+    ]
+    service.batchUpdate(spreadsheetId=SPREADSHEET_ID, body={'requests': requests}).execute()
+    sheets_cache.clear()
+    return len(rows_to_delete)
+
+@app.route('/batch_delete_jobs', methods=['POST'])
+def batch_delete_jobs():
+    try:
+        data = request.get_json() or {}
+        record_ids = data.get("job_ids", [])
+        if not record_ids:
+            return {"success": False, "error": "No jobs selected for deletion."}, 400
+            
+        deleted_count = delete_jobs_batch_from_sheet(record_ids)
+        return {"success": True, "deleted_count": deleted_count, "message": f"Successfully deleted {deleted_count} job(s) from Google Sheets!"}
+    except ValueError as ve:
+        return {"success": False, "error": str(ve)}, 404
+    except Exception as e:
+        print(f"❌ Error in batch deleting jobs: {e}")
+        return {"success": False, "error": str(e)}, 500
+
 @app.route('/shoot_email/<int:record_id>', methods=['POST'])
 def shoot_email(record_id):
     try:
