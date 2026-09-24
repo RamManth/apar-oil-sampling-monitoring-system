@@ -424,75 +424,99 @@
             border: 1px solid #a7f3d0;
         }
 
-        /* Responsive Table Container Wrapper to allow border radius + horizontal scroll */
+        /* Responsive Table Container Wrapper - Fully optimized to fit without horizontal scroll */
         .table-container-wrapper {
             border: 1px solid #cbd5e1;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             background-color: #ffffff;
+            width: 100%;
         }
         
         .table-responsive-scroll {
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            overflow-x: hidden !important;
+        }
+
+        @media (max-width: 991px) {
+            .table-responsive-scroll {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Fixed Proportional Fit Table */
+        .table-fixed-fit {
+            width: 100% !important;
+            table-layout: fixed !important;
+            margin-bottom: 0 !important;
         }
 
         /* Polished Table Headers & Columns with darker contrast and subtle tint */
-        .table thead th {
+        .table-fixed-fit thead th {
             font-weight: 800 !important;
-            font-size: 0.74rem !important;
+            font-size: 0.68rem !important;
             text-transform: uppercase !important;
             color: #0f172a !important;
             background-color: #f1f5f9 !important;
-            padding: 0.95rem 1rem !important;
+            padding: 0.65rem 0.45rem !important;
             vertical-align: middle !important;
             white-space: nowrap !important;
-            letter-spacing: 0.65px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            letter-spacing: 0.4px !important;
             border-bottom: 2px solid #cbd5e1 !important;
         }
 
-        .table tbody td {
-            font-size: 0.84rem !important;
+        .table-fixed-fit tbody td {
+            font-size: 0.77rem !important;
             color: #334155 !important;
-            padding: 0.85rem 1rem !important;
+            padding: 0.55rem 0.45rem !important;
             vertical-align: middle !important;
             white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
             border-bottom: 1px solid #f1f5f9 !important;
         }
 
-        .table tbody tr {
+        .table-fixed-fit tbody tr {
             transition: background-color 0.15s ease;
         }
 
-        .table tbody tr:hover {
+        .table-fixed-fit tbody tr:hover {
             background-color: #f8fafc !important;
         }
 
         /* Prevent edge clipping on curved table container corners */
-        .table thead th:first-child,
-        .table tbody td:first-child {
-            padding-left: 1.5rem !important;
-            min-width: 90px;
+        .table-fixed-fit thead th:first-child,
+        .table-fixed-fit tbody td:first-child {
+            padding-left: 0.75rem !important;
         }
-        .table thead th:last-child,
-        .table tbody td:last-child {
-            padding-right: 1.5rem !important;
+        .table-fixed-fit thead th:last-child,
+        .table-fixed-fit tbody td:last-child {
+            padding-right: 0.75rem !important;
         }
 
-        /* Handler Email Pill in Data Rows */
+        /* Handler Email Pill in Data Rows - compact & ellipsis protected */
         .handler-email-badge {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
             color: #334155 !important;
-            font-size: 0.78rem;
-            padding: 3px 8px;
-            border-radius: 6px;
+            font-size: 0.74rem;
+            padding: 2px 6px;
+            border-radius: 5px;
             text-decoration: none !important;
+            max-width: 100%;
             transition: all 0.15s ease;
+        }
+        .handler-email-badge span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .handler-email-badge:hover {
             background-color: #eff6ff;
@@ -500,29 +524,31 @@
             color: #2563eb !important;
         }
 
-        /* Non-wrapping unified action button container */
+        /* Non-wrapping compact action button container */
         .action-btn-container {
             display: inline-flex;
-            gap: 6px;
+            gap: 3px;
             justify-content: center;
             align-items: center;
             flex-wrap: nowrap;
+            max-width: 100%;
         }
         
         .action-btn-container .btn {
             white-space: nowrap !important;
-            font-size: 0.71rem !important;
+            font-size: 0.67rem !important;
             font-weight: 700 !important;
-            border-radius: 6px !important;
-            padding: 0.35rem 0.65rem !important;
+            border-radius: 5px !important;
+            padding: 0.22rem 0.42rem !important;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 3px;
             line-height: 1.2 !important;
             border: 1px solid transparent !important;
             transition: all 0.18s ease-in-out !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            flex-shrink: 0;
         }
 
         /* Action: Mark Done Button (Soft Emerald) */
@@ -535,7 +561,7 @@
             background-color: #059669 !important;
             border-color: #059669 !important;
             color: #ffffff !important;
-            box-shadow: 0 3px 8px rgba(5, 150, 105, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28) !important;
             transform: translateY(-1px);
         }
 
@@ -564,21 +590,24 @@
             background-color: #2563eb !important;
             border-color: #2563eb !important;
             color: #ffffff !important;
-            box-shadow: 0 3px 8px rgba(37, 99, 235, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.28) !important;
             transform: translateY(-1px);
         }
 
-        /* Action: Delete Job Button (Soft Rose) */
+        /* Action: Delete Job Button (Soft Rose square icon button) */
         .action-btn-container .btn-delete-job {
             background-color: #fff1f2 !important;
             color: #e11d48 !important;
             border-color: #fecdd3 !important;
+            width: 25px;
+            height: 25px;
+            padding: 0 !important;
         }
         .action-btn-container .btn-delete-job:hover {
             background-color: #e11d48 !important;
             border-color: #e11d48 !important;
             color: #ffffff !important;
-            box-shadow: 0 3px 8px rgba(225, 29, 72, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.28) !important;
             transform: translateY(-1px);
         }
 
@@ -862,7 +891,7 @@
     </div>
 
     <!-- Main Container -->
-    <div class="container-fluid my-4 px-3 px-md-5" style="max-width: 1500px;">
+    <div class="container-fluid my-4 px-2 px-md-3 px-xl-4" style="max-width: 1650px;">
         <div class="card form-card">
             <!-- Brand Header -->
             <div class="brand-header d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -1142,7 +1171,19 @@
 
                     <div class="table-container-wrapper">
                         <div class="table-responsive-scroll">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-hover align-middle mb-0 table-fixed-fit">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 9.5%;">
+                                    <col style="width: 10.5%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 10%;">
+                                    <col style="width: 11%;">
+                                    <col style="width: 8.5%;">
+                                    <col style="width: 11%;">
+                                    <col style="width: 7%;">
+                                    <col style="width: 12.5%;">
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th scope="col">Job ID</th>
@@ -1162,10 +1203,10 @@
                                         {% for job in all_jobs %}
                                         <tr id="job-row-{{ job.id }}" style="transition: background-color 0.15s ease;">
                                             <td>
-                                                <span class="badge bg-light text-dark border px-2 py-1" style="font-family: monospace; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px;">#{{ job.id }}</span>
+                                                <span class="badge bg-light text-dark border px-1.5 py-0.5" style="font-family: monospace; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.5px;">#{{ job.id }}</span>
                                             </td>
-                                            <td>{{ job.executive_name }}</td>
-                                            <td>{{ job.handler_name }}</td>
+                                            <td title="{{ job.executive_name }}">{{ job.executive_name }}</td>
+                                            <td title="{{ job.handler_name }}">{{ job.handler_name }}</td>
                                             <td>
                                                 {% if job.handler_email %}
                                                     <a href="mailto:{{ job.handler_email }}" class="handler-email-badge" title="Send email to {{ job.handler_email }}">
@@ -1178,14 +1219,14 @@
                                                     <span class="text-muted" style="font-size: 0.8rem;">-</span>
                                                 {% endif %}
                                             </td>
-                                            <td>{{ job.customer_details }}</td>
-                                            <td>{{ job.issue_type }}</td>
-                                            <td>{{ job.issue_date }}</td>
-                                            <td>{{ job.product_name }}</td>
+                                            <td title="{{ job.customer_details }}">{{ job.customer_details }}</td>
+                                            <td title="{{ job.issue_type }}">{{ job.issue_type }}</td>
+                                            <td title="{{ job.issue_date }}">{{ job.issue_date }}</td>
+                                            <td title="{{ job.product_name }}">{{ job.product_name }}</td>
                                             <td style="text-align: center;">
-                                                <span id="badge-{{ job.id }}" class="badge rounded-pill px-2.5 py-1.5 status-badge-item" 
+                                                <span id="badge-{{ job.id }}" class="badge rounded-pill px-2 py-1 status-badge-item" 
                                                       data-status="{{ job.status }}" 
-                                                      style="font-size: 0.68rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                      style="font-size: 0.65rem; font-weight: bold; letter-spacing: 0.4px; text-transform: uppercase;">
                                                     {{ job.status }}
                                                 </span>
                                             </td>
@@ -1194,17 +1235,16 @@
                                                     <button class="btn btn-sm action-btn-toggle" id="btn-{{ job.id }}" onclick="toggleJobStatus({{ job.id }}, '{{ job.status }}')">
                                                         Loading...
                                                     </button>
-                                                    <button class="btn btn-sm btn-action-email" id="email-btn-{{ job.id }}" onclick="shootEmail({{ job.id }})" {% if not job.handler_email %}disabled{% endif %} title="Shoot Email to Handler">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
+                                                    <button class="btn btn-sm btn-action-email" id="email-btn-{{ job.id }}" onclick="shootEmail({{ job.id }})" {% if not job.handler_email %}disabled{% endif %} title="Shoot Email to Handler ({{ job.handler_email }})">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
                                                             <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.136L2.408 7.377z"/>
                                                         </svg>
-                                                        <span>Shoot Email</span>
+                                                        <span>Email</span>
                                                     </button>
                                                     <button class="btn btn-sm btn-delete-job" id="delete-btn-{{ job.id }}" onclick="openDeleteJobModal('{{ job.id }}')" title="Delete Job #{{ job.id }}">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
                                                             <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
                                                         </svg>
-                                                        <span>Delete</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -1643,17 +1683,17 @@
             if (!badge || !btn) return;
             
             badge.innerText = status;
-            badge.className = "badge rounded-pill px-2.5 py-1.5 status-badge-item";
+            badge.className = "badge rounded-pill px-2 py-1 status-badge-item";
             
             if (status.trim().toLowerCase() === 'done') {
                 badge.classList.add('status-badge-done');
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/></svg><span>Reopen</span>`;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/></svg><span>Reopen</span>`;
                 btn.className = "btn btn-sm action-btn-toggle btn-status-done";
                 btn.title = `Reopen Job #${jobId}`;
                 btn.onclick = () => toggleJobStatus(jobId, 'Pending');
             } else {
                 badge.classList.add('status-badge-pending');
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg><span>Done</span>`;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg><span>Done</span>`;
                 btn.className = "btn btn-sm action-btn-toggle btn-status-pending";
                 btn.title = `Mark Job #${jobId} as Done`;
                 btn.onclick = () => toggleJobStatus(jobId, 'Done');
