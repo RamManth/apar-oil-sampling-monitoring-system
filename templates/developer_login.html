@@ -115,6 +115,18 @@
             filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
         }
 
+        .brand-subtitle {
+            color: #cbd5e1 !important;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            margin-top: 0.25rem;
+        }
+
+        .text-muted {
+            color: #94a3b8 !important;
+        }
+
         .form-label {
             font-weight: 600;
             font-size: 0.75rem;
@@ -202,12 +214,13 @@
         }
 
         .nav-links a {
-            color: var(--text-muted);
+            color: #94a3b8;
             text-decoration: none;
-            transition: color 0.2s ease;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            font-weight: 500;
         }
 
         .nav-links a:hover {
@@ -225,7 +238,7 @@
                         <span class="pulse-dot"></span> Developer Mode
                     </div>
                 </div>
-                <div class="text-muted small" style="letter-spacing: 0.5px;">Restricted Administrative Control Center</div>
+                <div class="brand-subtitle">Restricted Administrative Control Center</div>
             </div>
 
             <!-- Flash messages -->
