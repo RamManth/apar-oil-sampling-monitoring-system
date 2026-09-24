@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +17,7 @@
             --border-color: #1e2c47;
             --border-highlight: #2c3f66;
             --text-main: #f8fafc;
+            --text-secondary: #cbd5e1;
             --text-muted: #94a3b8;
             --accent-dev: #f59e0b;
             --accent-dev-hover: #fbbf24;
@@ -140,7 +141,7 @@
         .metric-label {
             font-size: 0.75rem;
             font-weight: 700;
-            color: var(--text-muted);
+            color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: 1.2px;
             margin-bottom: 0.5rem;
@@ -154,6 +155,26 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
+        .metric-sub {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-top: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .metric-sub code {
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* Tabs */
         .dev-tabs {
             display: flex;
@@ -164,9 +185,9 @@
         }
 
         .dev-tab-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
             font-weight: 600;
             font-size: 0.92rem;
             padding: 0.65rem 1.4rem;
@@ -179,14 +200,33 @@
         }
 
         .dev-tab-btn:hover {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.04);
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-highlight);
         }
 
         .dev-tab-btn.active {
-            background: rgba(245, 158, 11, 0.12);
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.14);
+            border: 1px solid rgba(245, 158, 11, 0.45);
             color: var(--accent-dev);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.12);
+        }
+
+        .tab-count-badge {
+            background: rgba(148, 163, 184, 0.15);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .dev-tab-btn.active .tab-count-badge {
+            background: rgba(245, 158, 11, 0.22);
+            color: var(--accent-dev);
+            border-color: rgba(245, 158, 11, 0.45);
         }
 
         /* Tables & Content Cards */
@@ -231,12 +271,17 @@
             outline: none;
         }
 
+        .search-input::placeholder {
+            color: #64748b !important;
+            opacity: 1;
+        }
+
         .search-icon {
             position: absolute;
             left: 0.85rem;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-muted);
+            color: #64748b;
             pointer-events: none;
         }
 
@@ -254,7 +299,7 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: var(--text-muted);
+            color: #94a3b8;
             border-bottom: 1px solid var(--border-color);
             font-weight: 700;
         }
@@ -270,6 +315,20 @@
 
         .dev-table tbody tr:hover td {
             background-color: rgba(245, 158, 11, 0.03);
+        }
+
+        .row-num {
+            color: #94a3b8 !important;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        .row-subtext {
+            color: #94a3b8 !important;
+            font-size: 0.78rem;
+            font-weight: 500;
+            margin-top: 2px;
         }
 
         /* Avatar initial */
@@ -365,33 +424,52 @@
 
         /* Action Buttons */
         .btn-action {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 5px 10px;
+            color: #cbd5e1;
+            padding: 6px 10px;
             border-radius: 8px;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 5px;
+            cursor: pointer;
+        }
+
+        .btn-action.edit {
+            color: #93c5fd;
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
         }
 
         .btn-action.edit:hover {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.4);
-            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.25);
+            border-color: #60a5fa;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-action.delete {
+            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
         }
 
         .btn-action.delete:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.4);
-            color: #f87171;
+            background: rgba(239, 68, 68, 0.25);
+            border-color: #f87171;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
         }
 
         .btn-action:disabled {
-            opacity: 0.4;
+            opacity: 0.35;
             cursor: not-allowed;
+            color: #64748b;
+            background: rgba(255, 255, 255, 0.02);
+            border-color: var(--border-color);
         }
 
         .btn-add-primary {
@@ -447,10 +525,22 @@
         .form-label {
             font-weight: 600;
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: #cbd5e1;
             text-transform: uppercase;
             letter-spacing: 0.8px;
             margin-bottom: 0.4rem;
+        }
+
+        .modal .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-color);
+            color: #cbd5e1;
+        }
+
+        .modal .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--border-highlight);
+            color: #ffffff;
         }
 
         .modal .form-control {
@@ -524,6 +614,38 @@
         .config-tag-pill .btn-remove-tag:hover {
             color: var(--accent-red);
         }
+
+        /* High contrast overrides for Bootstrap muted and secondary text */
+        .text-muted, 
+        .form-text.text-muted, 
+        .text-muted.small, 
+        .small.text-muted, 
+        small.text-muted,
+        p.text-muted,
+        div.text-muted,
+        td.text-muted,
+        span.text-muted {
+            color: #94a3b8 !important;
+        }
+
+        /* Badges in Section 3 Config Cards */
+        .content-card .badge.bg-secondary {
+            background: rgba(148, 163, 184, 0.18) !important;
+            color: #cbd5e1 !important;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+        }
+
+        code {
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+        }
     </style>
 </head>
 <body>
@@ -582,28 +704,28 @@
                 <div class="metric-card">
                     <div class="metric-label">Registered Handlers</div>
                     <div class="metric-value" style="color: var(--accent-dev);" id="metric-handlers-count">{{ total_handlers }}</div>
-                    <div class="text-muted small mt-1">Laboratory Staff</div>
+                    <div class="metric-sub">Laboratory Staff</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
                 <div class="metric-card">
                     <div class="metric-label">Portal Users</div>
                     <div class="metric-value" style="color: #60a5fa;" id="metric-users-count">{{ total_users }}</div>
-                    <div class="text-muted small mt-1">Field & Lab Accounts</div>
+                    <div class="metric-sub">Field & Lab Accounts</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
                 <div class="metric-card">
                     <div class="metric-label">Active Workloads</div>
                     <div class="metric-value" style="color: #34d399;">{{ active_jobs }}</div>
-                    <div class="text-muted small mt-1">Pending Evaluations</div>
+                    <div class="metric-sub">Pending Evaluations</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
                 <div class="metric-card">
                     <div class="metric-label">Admin Privilege</div>
                     <div class="metric-value" style="font-size: 1.5rem; color: #fbbf24;">MASTER</div>
-                    <div class="text-muted small mt-1">User: <code>admin</code></div>
+                    <div class="metric-sub">User: <code>admin</code></div>
                 </div>
             </div>
         </div>
@@ -616,14 +738,14 @@
                     <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
                 </svg>
                 Technical Handlers Directory
-                <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ handlers|length }}</span>
+                <span class="tab-count-badge ms-1">{{ handlers|length }}</span>
             </button>
             <button type="button" class="dev-tab-btn" id="btn-tab-users" onclick="switchDevTab('users')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
                     <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.022.004zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/>
                 </svg>
                 Portal Login Users
-                <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ users|length }}</span>
+                <span class="tab-count-badge ms-1">{{ users|length }}</span>
             </button>
             <button type="button" class="dev-tab-btn" id="btn-tab-config" onclick="switchDevTab('config')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
@@ -668,7 +790,7 @@
                         <tbody>
                             {% for h in handlers %}
                             <tr class="handler-row" data-name="{{ h.name|lower }}" data-email="{{ h.email|lower }}">
-                                <td class="text-muted font-monospace">{{ loop.index }}</td>
+                                <td class="row-num">{{ loop.index }}</td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-circle">
@@ -676,7 +798,7 @@
                                         </div>
                                         <div>
                                             <div class="fw-bold">{{ h.name }}</div>
-                                            <div class="text-muted small">Row {{ h.row_index }} in Sheet</div>
+                                            <div class="row-subtext">Row {{ h.row_index }} in Sheet</div>
                                         </div>
                                     </div>
                                 </td>
@@ -752,7 +874,7 @@
                         <tbody>
                             {% for u in users %}
                             <tr class="user-row" data-username="{{ u.username|lower }}" data-email="{{ u.email|lower }}">
-                                <td class="text-muted font-monospace">{{ loop.index }}</td>
+                                <td class="row-num">{{ loop.index }}</td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-circle user-avatar">
@@ -765,7 +887,7 @@
                                                     <span class="badge-admin">Admin</span>
                                                 {% endif %}
                                             </div>
-                                            <div class="text-muted small">Row {{ u.row_index }} in Sheet</div>
+                                            <div class="row-subtext">Row {{ u.row_index }} in Sheet</div>
                                         </div>
                                     </div>
                                 </td>
@@ -1534,14 +1656,14 @@
             profiles.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="text-muted font-monospace">${idx + 1}</td>
+                    <td class="row-num">${idx + 1}</td>
                     <td>
                         <input type="text" class="form-control form-control-sm search-input fw-bold" value="${escapeHtml(p.name)}" oninput="updateProfileName(${idx}, this.value)" style="max-width: 320px;">
                     </td>
                     <td>
                         <div class="input-group input-group-sm" style="max-width: 150px;">
                             <input type="number" min="1" max="180" class="form-control form-control-sm search-input font-monospace text-center" value="${p.sla_days}" oninput="updateProfileSLA(${idx}, this.value)">
-                            <span class="input-group-text font-monospace small" style="background: #111a2e; border-color: var(--border-color); color: var(--text-muted);">Days</span>
+                            <span class="input-group-text font-monospace small" style="background: #111a2e; border-color: var(--border-color); color: #cbd5e1;">Days</span>
                         </div>
                     </td>
                     <td>
@@ -1701,7 +1823,7 @@
                 tr.innerHTML = `
                     <td>
                         <div class="fw-bold text-light">${FIELD_DISPLAY_NAMES[key] || key}</div>
-                        <code class="small text-muted" style="font-size: 0.75rem;">name="${key}"</code>
+                        <code class="small" style="font-size: 0.75rem;">name="${key}"</code>
                     </td>
                     <td>
                         <input type="text" class="form-control form-control-sm search-input" value="${escapeHtml(item.label || '')}" oninput="updateFieldSetting('${key}', 'label', this.value)">
