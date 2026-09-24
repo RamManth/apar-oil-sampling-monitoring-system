@@ -839,8 +839,12 @@
     <!-- Redefined Notification Drawer -->
     <div id="notificationDrawer" class="notification-drawer">
         <div class="notification-drawer-header">
-            <h5 class="m-0 text-uppercase fw-bold d-flex align-items-center gap-2" style="font-size: 1rem; letter-spacing: 0.5px;">
-                <span>🚨</span> Active Timeline Monitor
+            <h5 class="m-0 text-uppercase fw-bold d-flex align-items-center gap-2 text-warning" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-shield-exclamation text-danger flex-shrink-0" viewBox="0 0 16 16">
+                    <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.546-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.464 9.99a11.8 11.8 0 0 1-2.946 2.659c-.638.411-1.272.71-1.449.774a1.7 1.7 0 0 1-1.96 0c-.177-.064-.811-.363-1.449-.774a11.8 11.8 0 0 1-2.946-2.659c-1.677-2.195-3.06-5.513-2.464-9.99A1.54 1.54 0 0 1 2.887 1.43c.658-.215 1.776-.57 2.887-.87"/>
+                    <path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0z"/>
+                </svg>
+                <span>Active Timeline Monitor</span>
             </h5>
             <button type="button" class="btn-close btn-close-white" onclick="closeDrawer()" aria-label="Close"></button>
         </div>
@@ -864,14 +868,24 @@
                                 <div class="mt-1 text-info" style="font-size: 0.8rem;">Target Date: <strong>{{ alarm.deadline }}</strong></div>
                             </div>
                             <form method="POST" action="/mark_done/{{ alarm.id }}" class="m-0">
-                                <button type="submit" class="btn btn-sm btn-success w-100 text-uppercase fw-bold py-1.5" style="font-size: 0.75rem; border-radius: 6px;">Job Done ✓</button>
+                                <button type="submit" class="btn btn-sm btn-success w-100 text-uppercase fw-bold py-1.5 d-inline-flex align-items-center justify-content-center gap-1.5" style="font-size: 0.75rem; border-radius: 6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                                    </svg>
+                                    <span>Job Done</span>
+                                </button>
                             </form>
                         </div>
                     {% endfor %}
                 </div>
             {% else %}
                 <div class="text-center text-muted py-5 mt-4">
-                    <span style="font-size: 2.5rem; display: block; margin-bottom: 1rem;">🎉</span>
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 54px; height: 54px; background-color: rgba(16, 185, 129, 0.15); color: #10b981;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-check2-circle" viewBox="0 0 16 16">
+                            <path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/>
+                            <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+                        </svg>
+                    </div>
                     <p class="mb-1 fw-bold text-white">All Targets Clear</p>
                     <span class="text-secondary" style="font-size: 0.8rem;">No active critical alarms are registered.</span>
                 </div>
@@ -924,13 +938,24 @@
             <!-- View Selector Tabs -->
             <div class="view-selector-tabs">
                 <button type="button" class="view-tab-btn active" id="tab-sample-entry" onclick="switchView('sample-entry')">
-                    📝 Sample Entry
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-file-earmark-plus" viewBox="0 0 16 16">
+                        <path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5"/>
+                        <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                    </svg>
+                    <span>Sample Entry</span>
                 </button>
                 <button type="button" class="view-tab-btn" id="tab-data-checklist" onclick="switchView('data-checklist')">
-                    📋 Data Check List
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+                        <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z"/>
+                    </svg>
+                    <span>Data Check List</span>
                 </button>
                 <button type="button" class="view-tab-btn" id="tab-about-software" onclick="switchView('about-software')">
-                    ℹ️ About Software
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                    </svg>
+                    <span>About Software</span>
                 </button>
             </div>
 
@@ -1070,8 +1095,11 @@
                         <div class="col-12 mt-4">
                             <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" id="deadline-preview-card" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; transition: all 0.3s ease;">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div id="deadline-icon" style="background-color: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; transition: all 0.2s;">
-                                        📅
+                                    <div id="deadline-icon" style="background-color: #e2e8f0; color: #475569; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-calendar3" viewBox="0 0 16 16">
+                                            <path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2M1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857z"/>
+                                            <path d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2m3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                                        </svg>
                                     </div>
                                     <div>
                                         <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">Estimated Target Deadline Date</div>
@@ -1095,8 +1123,12 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="fw-bold m-0 text-uppercase" style="font-size: 0.85rem; color: var(--form-text); letter-spacing: 0.5px;">Active Monitoring Ledger</h5>
                         <div class="d-flex align-items-center gap-2">
-                            <button type="button" class="btn btn-sm btn-success fw-bold text-uppercase px-3" onclick="openExportModal()" style="border-radius: 6px; letter-spacing: 0.5px; background-color: #10b981; border-color: #10b981; font-size: 0.7rem; padding: 6px 12px;">
-                                📊 Export to Excel
+                            <button type="button" class="btn btn-sm btn-success fw-bold text-uppercase px-3 d-inline-flex align-items-center gap-1.5" onclick="openExportModal()" style="border-radius: 6px; letter-spacing: 0.5px; background-color: #10b981; border-color: #10b981; font-size: 0.7rem; padding: 6px 12px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+                                    <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                                </svg>
+                                <span>Export to Excel</span>
                             </button>
                             <button type="button" class="btn btn-sm btn-danger fw-bold text-uppercase px-3 d-inline-flex align-items-center gap-1.5" onclick="openBatchDeleteModal()" style="border-radius: 6px; letter-spacing: 0.5px; background-color: #ef4444; border-color: #ef4444; font-size: 0.7rem; padding: 6px 12px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16" style="vertical-align: -1px;">
@@ -1111,28 +1143,46 @@
                     <!-- Metrics Container -->
                     <div class="metrics-container">
                         <div class="metric-card metric-blue">
-                            <div class="metric-icon">📋</div>
+                            <div class="metric-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-layers-fill" viewBox="0 0 16 16">
+                                    <path d="M7.765 1.559a.5.5 0 0 1 .47 0l7.5 4a.5.5 0 0 1 0 .882l-7.5 4a.5.5 0 0 1-.47 0l-7.5-4a.5.5 0 0 1 0-.882z"/>
+                                    <path d="m2.125 8.567-1.86.992a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882l-1.86-.992-5.17 2.756a1.5 1.5 0 0 1-1.41 0z"/>
+                                    <path d="m2.125 11.567-1.86.992a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882l-1.86-.992-5.17 2.756a1.5 1.5 0 0 1-1.41 0z"/>
+                                </svg>
+                            </div>
                             <div class="metric-details">
                                 <h3 id="stat-total-jobs">0</h3>
                                 <p>Total Jobs</p>
                             </div>
                         </div>
                         <div class="metric-card metric-amber">
-                            <div class="metric-icon">⏳</div>
+                            <div class="metric-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-hourglass-split" viewBox="0 0 16 16">
+                                    <path d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48zm1 0c0 .701.478 1.236 1.011 1.492A3.5 3.5 0 0 1 11.5 13s-.866-1.299-3-1.48z"/>
+                                </svg>
+                            </div>
                             <div class="metric-details">
                                 <h3 id="stat-pending-jobs">0</h3>
                                 <p>Pending</p>
                             </div>
                         </div>
                         <div class="metric-card metric-emerald">
-                            <div class="metric-icon">✅</div>
+                            <div class="metric-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                </svg>
+                            </div>
                             <div class="metric-details">
                                 <h3 id="stat-completed-jobs">0</h3>
                                 <p>Completed</p>
                             </div>
                         </div>
                         <div class="metric-card metric-rose">
-                            <div class="metric-icon">🚨</div>
+                            <div class="metric-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-bell-fill" viewBox="0 0 16 16">
+                                    <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901"/>
+                                </svg>
+                            </div>
                             <div class="metric-details">
                                 <h3 id="stat-alarms">0</h3>
                                 <p>Timeline Alerts</p>
@@ -1309,13 +1359,13 @@
                             <div class="col-md-6">
                                 <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
                                     <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">LinkedIn Profile</div>
-                                    <div class="fw-bold"><a href="https://www.linkedin.com/in/ram-manthanwar-072763216/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">linkedin.com/in/ram-manthanwar... ↗</a></div>
+                                    <div class="fw-bold"><a href="https://www.linkedin.com/in/ram-manthanwar-072763216/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 4px;"><span>linkedin.com/in/ram-manthanwar...</span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/><path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></svg></a></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="p-3 rounded-3 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0;">
                                     <div class="text-secondary mb-1" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">GitHub Profile</div>
-                                    <div class="fw-bold"><a href="https://github.com/RamManth" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem;">github.com/RamManth ↗</a></div>
+                                    <div class="fw-bold"><a href="https://github.com/RamManth" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 4px;"><span>github.com/RamManth</span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/><path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></svg></a></div>
                                 </div>
                             </div>
                             <div class="col-12 mt-3">
@@ -1400,7 +1450,7 @@
             const icon = document.getElementById('deadline-icon');
             icon.style.backgroundColor = '#dbeafe';
             icon.style.color = '#3b82f6';
-            icon.innerText = '⚡';
+            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-lightning-charge-fill" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg>`;
         }
 
         function appendTestParam(param) {
@@ -1941,12 +1991,15 @@
             const toast = document.createElement('div');
             toast.className = `custom-toast custom-toast-${type}`;
             
-            let iconMarkup = 'ℹ️';
-            if (type === 'success') iconMarkup = '✅';
-            if (type === 'danger') iconMarkup = '❌';
+            let iconMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-info-circle-fill text-info flex-shrink-0" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/></svg>`;
+            if (type === 'success') {
+                iconMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-check-circle-fill text-success flex-shrink-0" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>`;
+            } else if (type === 'danger') {
+                iconMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-exclamation-octagon-fill text-danger flex-shrink-0" viewBox="0 0 16 16"><path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353zM8 4c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995A.905.905 0 0 1 8 4m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>`;
+            }
 
             toast.innerHTML = `
-                <div style="font-size: 1.1rem; line-height: 1;">${iconMarkup}</div>
+                <div class="d-flex align-items-center">${iconMarkup}</div>
                 <div style="flex-grow: 1; font-size: 0.85rem; font-weight: 500;">${message}</div>
                 <button type="button" class="btn-close btn-close-white" style="font-size: 0.7rem; padding: 0.2rem; margin: -0.2rem -0.2rem -0.2rem auto; outline: none; box-shadow: none;" onclick="this.parentElement.remove()"></button>
             `;
@@ -2033,12 +2086,14 @@
                 if (job) {
                     const isOpen = job.status && job.status.toLowerCase() !== 'done';
                     const statusBadge = isOpen
-                        ? `<span class="badge bg-danger text-uppercase px-2 py-0.5">🚨 OPEN / PENDING</span>`
-                        : `<span class="badge bg-success text-uppercase px-2 py-0.5">✅ COMPLETED (DONE)</span>`;
+                        ? `<span class="badge bg-danger text-uppercase px-2 py-0.5 d-inline-flex align-items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-shield-exclamation" viewBox="0 0 16 16"><path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.546-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.464 9.99a11.8 11.8 0 0 1-2.946 2.659c-.638.411-1.272.71-1.449.774a1.7 1.7 0 0 1-1.96 0c-.177-.064-.811-.363-1.449-.774a11.8 11.8 0 0 1-2.946-2.659c-1.677-2.195-3.06-5.513-2.464-9.99A1.54 1.54 0 0 1 2.887 1.43c.658-.215 1.776-.57 2.887-.87"/><path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0z"/></svg><span>OPEN / PENDING</span></span>`
+                        : `<span class="badge bg-success text-uppercase px-2 py-0.5 d-inline-flex align-items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-check2-circle" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0"/><path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/></svg><span>COMPLETED (DONE)</span></span>`;
                     
                     const openWarningHtml = isOpen ? `
                         <div class="p-2.5 rounded-3 mt-2.5 d-flex align-items-center gap-2" style="background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fee2e2; font-size: 0.82rem;">
-                            <span style="font-size: 1.3rem; line-height: 1;">🚨</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-shield-exclamation text-danger flex-shrink-0" viewBox="0 0 16 16">
+                                <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.546-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.464 9.99a11.8 11.8 0 0 1-2.946 2.659c-.638.411-1.272.71-1.449.774a1.7 1.7 0 0 1-1.96 0c-.177-.064-.811-.363-1.449-.774a11.8 11.8 0 0 1-2.946-2.659c-1.677-2.195-3.06-5.513-2.464-9.99A1.54 1.54 0 0 1 2.887 1.43c.658-.215 1.776-.57 2.887-.87"/><path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0z"/>
+                            </svg>
                             <span><strong>CRITICAL WARNING:</strong> This job is currently <strong>OPEN / IN PROGRESS</strong> (not marked Done)! Deleting it will permanently purge an active evaluation from Google Sheets.</span>
                         </div>
                     ` : '';
@@ -2080,7 +2135,7 @@
                 ? allJobsData.find(j => String(j.id) === String(jobId)) 
                 : null;
             if (job && job.status && job.status.toLowerCase() !== 'done') {
-                if (!confirm(`⚠️ CRITICAL WARNING: Job #${jobId} is an OPEN / IN-PROGRESS task (not marked Done)!\n\nDeleting this opened job will permanently purge it from Google Sheets.\n\nAre you sure you want to proceed?`)) {
+                if (!confirm(`CRITICAL WARNING: Job #${jobId} is an OPEN / IN-PROGRESS task (not marked Done)!\n\nDeleting this opened job will permanently purge it from Google Sheets.\n\nAre you sure you want to proceed?`)) {
                     return;
                 }
             }
@@ -2295,8 +2350,8 @@
                 }
                 
                 const statusBadge = isOpen
-                    ? `<span class="badge rounded-pill px-2.5 py-1 text-uppercase fw-bold" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.68rem; letter-spacing: 0.5px;">🚨 OPEN / PENDING</span>`
-                    : `<span class="badge rounded-pill px-2.5 py-1 text-uppercase fw-bold" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.68rem; letter-spacing: 0.5px;">✅ DONE</span>`;
+                    ? `<span class="badge rounded-pill px-2.5 py-1 text-uppercase fw-bold d-inline-flex align-items-center gap-1" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.68rem; letter-spacing: 0.5px;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-shield-exclamation" viewBox="0 0 16 16"><path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.546-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.464 9.99a11.8 11.8 0 0 1-2.946 2.659c-.638.411-1.272.71-1.449.774a1.7 1.7 0 0 1-1.96 0c-.177-.064-.811-.363-1.449-.774a11.8 11.8 0 0 1-2.946-2.659c-1.677-2.195-3.06-5.513-2.464-9.99A1.54 1.54 0 0 1 2.887 1.43c.658-.215 1.776-.57 2.887-.87"/><path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0z"/></svg><span>OPEN / PENDING</span></span>`
+                    : `<span class="badge rounded-pill px-2.5 py-1 text-uppercase fw-bold d-inline-flex align-items-center gap-1" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.68rem; letter-spacing: 0.5px;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg><span>DONE</span></span>`;
 
                 tr.innerHTML = `
                     <td style="padding: 10px 14px; text-align: center;">
@@ -2428,7 +2483,7 @@
             // Crucial Warning if open jobs are selected
             if (openJobs.length > 0) {
                 const openJobIds = openJobs.map(j => `#${j.id}`).slice(0, 8).join(', ') + (openJobs.length > 8 ? '...' : '');
-                const msg = `⚠️ CRITICAL WARNING!\n\nYou have selected ${openJobs.length} OPEN / ACTIVE job(s) (${openJobIds}) for permanent deletion!\n\nThese technical evaluation tasks have NOT been completed (marked as 'Done'). Deleting them will purge them permanently from Google Sheets.\n\nAre you ABSOLUTELY sure you want to proceed and delete these ${selectedIds.length} job(s)?`;
+                const msg = `CRITICAL WARNING!\n\nYou have selected ${openJobs.length} OPEN / ACTIVE job(s) (${openJobIds}) for permanent deletion!\n\nThese technical evaluation tasks have NOT been completed (marked as 'Done'). Deleting them will purge them permanently from Google Sheets.\n\nAre you ABSOLUTELY sure you want to proceed and delete these ${selectedIds.length} job(s)?`;
                 if (!confirm(msg)) {
                     return;
                 }
@@ -2733,7 +2788,10 @@
                         <!-- Filled dynamically -->
                     </div>
                     <div class="d-flex align-items-center gap-2 text-warning small">
-                        <span>⚠️</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle flex-shrink-0" viewBox="0 0 16 16">
+                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                        </svg>
                         <span>This will delete the job row permanently from Google Sheets. This action cannot be undone.</span>
                     </div>
                 </div>
@@ -2790,7 +2848,12 @@
                         </div>
                         <div class="col-12">
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-muted);">🔍 Filter Search</span>
+                                <span class="input-group-text d-flex align-items-center gap-1.5" style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-muted);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                    </svg>
+                                    <span>Filter Search</span>
+                                </span>
                                 <input type="text" id="batch-delete-filter-search" class="form-control" placeholder="Search filtered records by ID, customer name, executive, product, or issue type..." style="background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
                             </div>
                         </div>
@@ -2798,7 +2861,12 @@
 
                     <!-- Dynamic Warning Banner for Opened Jobs -->
                     <div id="batch-delete-warning-banner" class="p-3 mb-3 rounded-3 d-flex align-items-center gap-3" style="display: none !important; background-color: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 10px; color: #fee2e2;">
-                        <div style="font-size: 1.6rem; line-height: 1;">🚨</div>
+                        <div class="flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-shield-exclamation text-danger" viewBox="0 0 16 16">
+                                <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.546-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.464 9.99a11.8 11.8 0 0 1-2.946 2.659c-.638.411-1.272.71-1.449.774a1.7 1.7 0 0 1-1.96 0c-.177-.064-.811-.363-1.449-.774a11.8 11.8 0 0 1-2.946-2.659c-1.677-2.195-3.06-5.513-2.464-9.99A1.54 1.54 0 0 1 2.887 1.43c.658-.215 1.776-.57 2.887-.87"/>
+                                <path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0z"/>
+                            </svg>
+                        </div>
                         <div>
                             <div class="fw-bold text-danger" style="font-size: 0.88rem; letter-spacing: 0.3px;">
                                 CRITICAL WARNING: <span id="batch-delete-open-count" class="badge bg-danger text-white px-2 py-0.5 font-monospace">0</span> OPEN / ACTIVE JOB(S) SELECTED FOR DELETION!
@@ -2810,7 +2878,9 @@
                     </div>
 
                     <div id="batch-delete-safe-banner" class="p-2.5 mb-3 rounded-3 d-flex align-items-center gap-2" style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #a7f3d0; font-size: 0.82rem;">
-                        <span>✅</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill text-success flex-shrink-0" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
                         <span>Safe: All selected jobs are completed (Done). No active open jobs are selected.</span>
                     </div>
 
@@ -2872,7 +2942,12 @@
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content" style="background-color: var(--header-bg); border: 1px solid var(--border-color); border-radius: 20px; color: var(--text-main);">
                 <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title fw-bold text-uppercase" id="exportModalLabel" style="font-size: 0.95rem; letter-spacing: 0.5px; color: var(--accent);">📊 Export Ledger to Excel</h5>
+                    <h5 class="modal-title fw-bold text-uppercase d-flex align-items-center gap-2" id="exportModalLabel" style="font-size: 0.95rem; letter-spacing: 0.5px; color: var(--accent);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-file-earmark-excel-fill text-success" viewBox="0 0 16 16">
+                            <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M5.884 6.68 8 9.219l2.116-2.54a.5.5 0 1 1 .768.641L8.651 10l2.233 2.68a.5.5 0 0 1-.768.64L8 10.781l-2.116 2.54a.5.5 0 0 1-.768-.641L7.349 10 5.116 7.32a.5.5 0 1 1 .768-.64"/>
+                        </svg>
+                        <span>Export Ledger to Excel</span>
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="box-shadow: none; outline: none;"></button>
                 </div>
                 <div class="modal-body" style="padding: 2rem;">
@@ -2907,8 +2982,12 @@
                         <div style="font-size: 0.85rem; color: var(--text-muted);">
                             Records Found: <strong id="export-match-count" class="text-info" style="font-size: 1rem;">0</strong>
                         </div>
-                        <button type="button" class="btn btn-success fw-bold text-uppercase px-4 py-2" onclick="downloadExcelFile()" style="background-color: #10b981; border-color: #10b981; border-radius: 8px; font-size: 0.8rem; letter-spacing: 0.5px;">
-                            📥 Download Excel
+                        <button type="button" class="btn btn-success fw-bold text-uppercase px-4 py-2 d-inline-flex align-items-center gap-1.5" onclick="downloadExcelFile()" style="background-color: #10b981; border-color: #10b981; border-radius: 8px; font-size: 0.8rem; letter-spacing: 0.5px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                            </svg>
+                            <span>Download Excel</span>
                         </button>
                     </div>
 
